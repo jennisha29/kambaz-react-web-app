@@ -7,7 +7,7 @@ export default function Labs() {
   return (
     <div>
         <h1>Jennisha Christina Martin</h1>
-        <h2>CS5610 Web Development SEC 01 Spring 2025</h2>
+        <h2>CS5610.35649.202530 Web Development SEC 01 Spring 2025</h2>
         <hr/>
         <h1>Labs</h1>
         <TOC />
