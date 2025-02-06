@@ -1,67 +1,113 @@
+import { ListGroup } from "react-bootstrap";
+import { BsGripVertical } from "react-icons/bs";
+import ModulesControls from "./ModulesControls";
+import LessonControlButtons from "./LessonControlButtons";
+import ModuleControlButtons from "./ModuleControlButtons";
+
 export default function Modules() {
     return (
       <div>
-        <div className="wd-module-buttons">
-            <button>Collapse All</button>
-            <button>View Progress</button>
-            <button>Publish All</button>
-            <button>+ Module</button>
-        </div>
-        <ul id="wd-modules">
-          <li className="wd-module">
-            <div className="wd-title">Week 1, Lecture 1 - Introduction to React</div>
-            <ul className="wd-lessons">
-              <li className="wd-lesson">
-                <span className="wd-title">LEARNING OBJECTIVES</span>
-                <ul className="wd-content">
-                  <li className="wd-content-item">Introduction to the course</li>
-                  <li className="wd-content-item">Learn what is React Development</li>
-                </ul>
-              </li>
-              <li className="wd-lesson">
-                <span className="wd-title">READING</span>
-                <ul className="wd-content">
-                    <li className="wd-content-item">Full Stack Developer - Chapter 1 - React Fundamentals</li>
-                    <li className="wd-content-item">Full Stack Developer - Chapter 2 - Creating Components</li>
-                </ul>
-              </li>
-              <li className="wd-lesson">
-                <span className="wd-title">SLIDES</span>
-                <ul className="wd-content">
-                    <li className="wd-content-item">Introduction to React Development</li>
-                    <li className="wd-content-item">Creating a React Application with Create-React-App</li>
-                    <li className="wd-content-item">Understanding JSX and Components</li>
-                </ul>
-              </li>
-            </ul>
-          </li>
-          <li className="wd-module">
-            <div className="wd-title">Week 1, Lecture 2 - Building React Components</div>
-            <ul className="wd-lessons">
-                <li className="wd-lesson">
-                    <span className="wd-title">LEARNING OBJECTIVES</span>
-                    <ul className="wd-content">
-                        <li className="wd-content-item">Learn how to create React components</li>
-                        <li className="wd-content-item">Deploy React application to Netlify</li>
-                    </ul>
-                </li>
-                <li className="wd-lesson">
-                    <span className="wd-title">SLIDES</span>
-                    <ul className="wd-content">
-                        <li className="wd-content-item">Props and State in React</li>
-                        <li className="wd-content-item">Working with React Events</li>
-                        <li className="wd-content-item">Component Lifecycle and Hooks</li>
-                    </ul>
-                </li>
-            </ul>
-        </li>
-        <li className="wd-module">
-            <div className="wd-title">Week 2</div>
-        </li>
-        <li className="wd-module">
-            <div className="wd-title">Week 3</div>
-        </li>
-     </ul>
-   </div>
-  );}
-  
+        <ModulesControls /><br /><br /><br />
+        <ListGroup className="rounded-0" id="wd-modules">
+          <ListGroup.Item className="wd-module p-0 mb-2 fs-5 border-gray">
+            <div className="wd-title p-2 bg-light d-flex justify-content-between align-items-center">
+              <div>
+                <BsGripVertical className="me-2 fs-3" /> Week 1
+              </div>
+              <ModuleControlButtons />
+            </div>
+            <ListGroup className="wd-lessons rounded-0">
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> LEARNING OBJECTIVES
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> Lecture 1 - Introduction to React
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> Lecture 2 - Understanding JSX
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> Lecture 3 - Components & Props
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> Lecture 4 - State and Events
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+            </ListGroup>
+          </ListGroup.Item>
+
+          <ListGroup.Item className="wd-module p-0 mb-2 fs-5 bg-dark border border-gray">
+            <div className="wd-title p-2 bg-light d-flex justify-content-between align-items-center">
+              <div>
+                <BsGripVertical className="me-2 fs-3" /> Week 2
+              </div>
+              <ModuleControlButtons />
+            </div>
+            <ListGroup className="wd-lessons rounded-0">
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> LEARNING OBJECTIVES
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> Lecture 1 - React Lifecycle Methods
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> Lecture 2 - React Hooks (State & Effect)
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+            </ListGroup>
+          </ListGroup.Item>
+          <ListGroup.Item className="wd-module p-0 mb-2 fs-5 border-gray">
+            <div className="wd-title p-2 bg-light d-flex justify-content-between align-items-center">
+              <div>
+                <BsGripVertical className="me-2 fs-3" /> Week 3
+              </div>
+              <ModuleControlButtons />
+            </div>
+            <ListGroup className="wd-lessons rounded-0">
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> LEARNING OBJECTIVES
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> Lecture 1 - React Router
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+              <ListGroup.Item className="wd-lesson p-3 ps-1 d-flex align-items-center justify-content-between">
+                <div>
+                  <BsGripVertical className="me-2 fs-3" /> Lecture 2 - Testing React Apps
+                </div>
+                <LessonControlButtons />
+              </ListGroup.Item>
+            </ListGroup>
+          </ListGroup.Item>
+
+        </ListGroup>
+      </div>
+    );
+}
