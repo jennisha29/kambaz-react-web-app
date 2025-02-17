@@ -1,25 +1,33 @@
 import { Form, Button, Row, Col } from "react-bootstrap";
+import { useParams, Link } from "react-router-dom";
+import { assignments } from "../../Database";
 
 export default function AssignmentEditor() {
+  const { aid, cid } = useParams();
+  const assignment = assignments.find((a) => a._id === aid);
+
+  if (!assignment) {
+    return <div>Assignment not found</div>;
+  }
+
+  const formatDateForInput = (dateString: string): string => {
+    return dateString.split('T')[0];
+  };
+
   return (
     <div>
       <div>Assignment Name</div>
-      <Form.Control type="text" value="A1" className="mb-3" />
+      <Form.Control 
+        type="text" 
+        value={assignment.title} 
+        className="mb-3" 
+      />
+      
       <Form.Control
         as="textarea"
         rows={6}
         className="mb-3"
-        value={`The assignment is available online
-
-Submit a link to the landing page of your Web application running on Netlify.
-
-The landing page should include the following:
-- Your full name and section
-- Links to each of the lab assignments
-- Link to the Kanbas application
-- Links to all relevant source code repositories
-
-The Kanbas application should include a link to navigate back to the landing page.`}
+        value={assignment.description}
       />
 
       <Row className="mb-3">
@@ -27,9 +35,10 @@ The Kanbas application should include a link to navigate back to the landing pag
           Points
         </Col>
         <Col>
-          <Form.Control type="text" value="100" />
+          <Form.Control type="text" value={assignment.points} />
         </Col>
       </Row>
+
       <Row className="mb-3">
         <Col xs={2} className="text-end">
           Assignment Group
@@ -40,6 +49,7 @@ The Kanbas application should include a link to navigate back to the landing pag
           </Form.Select>
         </Col>
       </Row>
+
       <Row className="mb-3">
         <Col xs={2} className="text-end">
           Display Grade as
@@ -50,6 +60,7 @@ The Kanbas application should include a link to navigate back to the landing pag
           </Form.Select>
         </Col>
       </Row>
+
       <Row className="mb-3">
         <Col xs={2} className="text-end">
           Submission Type
@@ -87,7 +98,7 @@ The Kanbas application should include a link to navigate back to the landing pag
             <div>Due</div>
             <Form.Control 
               type="date"
-              defaultValue="2024-05-13"
+              value={formatDateForInput(assignment.dueDate)}
               className="mb-3"
             />
 
@@ -96,7 +107,7 @@ The Kanbas application should include a link to navigate back to the landing pag
                 <div>Available from</div>
                 <Form.Control 
                   type="date"
-                  defaultValue="2024-05-06"
+                  value={formatDateForInput(assignment.availableFromDate)}
                 />
               </div>
               <div>
@@ -109,8 +120,18 @@ The Kanbas application should include a link to navigate back to the landing pag
       </Row>
 
       <div className="text-end">
-        <Button variant="secondary" className="me-2">Cancel</Button>
-        <Button variant="danger">Save</Button>
+        <Link 
+          to={`/Kambaz/Courses/${cid}/Assignments`} 
+          className="btn btn-secondary me-2"
+        >
+          Cancel
+        </Link>
+        <Link 
+          to={`/Kambaz/Courses/${cid}/Assignments`}
+          className="btn btn-danger"
+        >
+          Save
+        </Link>
       </div>
     </div>
   );

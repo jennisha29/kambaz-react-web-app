@@ -1,0 +1,122 @@
+[
+    {
+      "_id": "1",
+      "firstName": "Tony",
+      "lastName": "Stark",
+      "loginId": "001234561S",
+      "section": "S101",
+      "role": "STUDENT",
+      "lastActivity": "2024-02-01",
+      "totalActivity": "10:21:32"
+    },
+    {
+      "_id": "2",
+      "firstName": "Bruce",
+      "lastName": "Wayne",
+      "loginId": "001234562S",
+      "section": "S101",
+      "role": "STUDENT",
+      "lastActivity": "2024-02-02",
+      "totalActivity": "15:32:43"
+    },
+    {
+      "_id": "3",
+      "firstName": "Steve",
+      "lastName": "Rogers",
+      "loginId": "001234563S",
+      "section": "S101",
+      "role": "STUDENT",
+      "lastActivity": "2024-02-03",
+      "totalActivity": "23:32:43"
+    },
+    {
+      "_id": "4",
+      "firstName": "Natasha",
+      "lastName": "Romanoff",
+      "loginId": "001234564S",
+      "section": "S101",
+      "role": "TA",
+      "lastActivity": "2024-02-04",
+      "totalActivity": "13:23:34"
+    },
+    {
+      "_id": "5",
+      "firstName": "Nick",
+      "lastName": "Fury",
+      "loginId": "001234565A",
+      "section": "ALL",
+      "role": "ADMIN",
+      "lastActivity": "2024-02-05",
+      "totalActivity": "45:12:56"
+    },
+    {
+      "_id": "6",
+      "firstName": "Charles",
+      "lastName": "Xavier",
+      "loginId": "001234566F",
+      "section": "S101",
+      "role": "FACULTY",
+      "lastActivity": "2024-02-05",
+      "totalActivity": "32:45:21"
+    },
+    {
+      "_id": "7",
+      "firstName": "Peter",
+      "lastName": "Parker",
+      "loginId": "001234567S",
+      "section": "S102",
+      "role": "STUDENT",
+      "lastActivity": "2024-02-04",
+      "totalActivity": "18:45:32"
+    },
+    {
+      "_id": "8",
+      "firstName": "Reed",
+      "lastName": "Richards",
+      "loginId": "001234568F",
+      "section": "S102",
+      "role": "FACULTY",
+      "lastActivity": "2024-02-05",
+      "totalActivity": "28:15:45"
+    },
+    {
+      "_id": "9",
+      "firstName": "Bruce",
+      "lastName": "Banner",
+      "loginId": "001234569F",
+      "section": "S103",
+      "role": "FACULTY",
+      "lastActivity": "2024-02-05",
+      "totalActivity": "30:20:15"
+    },
+    {
+      "_id": "10",
+      "firstName": "Carol",
+      "lastName": "Danvers",
+      "loginId": "001234570T",
+      "section": "S102",
+      "role": "TA",
+      "lastActivity": "2024-02-04",
+      "totalActivity": "20:15:45"
+    },
+    {
+      "_id": "11",
+      "firstName": "Stephen",
+      "lastName": "Strange",
+      "loginId": "001234571F",
+      "section": "S103",
+      "role": "FACULTY",
+      "lastActivity": "2024-02-05",
+      "totalActivity": "25:30:15"
+    },
+    {
+      "_id": "12",
+      "firstName": "Wanda",
+      "lastName": "Maximoff",
+      "loginId": "001234572S",
+      "section": "S102",
+      "role": "STUDENT",
+      "lastActivity": "2024-02-04",
+      "totalActivity": "12:45:30"
+    }
+  ]
