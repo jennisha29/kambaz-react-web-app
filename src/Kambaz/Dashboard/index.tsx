@@ -12,11 +12,8 @@ export default function Dashboard(
 {
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   const { enrollments } = db;
-  
-  // Check if the current user has the FACULTY role
+  // checking if the current user has the FACULTY role
   const isFaculty = currentUser?.role === "FACULTY";
-  
-  // Get the enrolled courses count
   const enrolledCoursesCount = courses.filter((course) =>
     enrollments.some(
       (enrollment) =>
@@ -29,7 +26,6 @@ export default function Dashboard(
     <div id="wd-dashboard">
       <h1 id="wd-dashboard-title">Dashboard</h1> <hr />
       
-      {/* Only show course creation/editing UI for faculty */}
       {isFaculty && (
         <>
           <h5>
@@ -70,7 +66,6 @@ export default function Dashboard(
         </>
       )}
       
-      {/* Modified heading to remove the name */}
       <h2 id="wd-dashboard-published">
         Published Courses ({enrolledCoursesCount})
       </h2> <hr />
@@ -110,7 +105,7 @@ export default function Dashboard(
                                   </Card.Text>
                                   <div className="d-flex justify-content-between">
                                       <Button variant="primary">Go</Button>
-                                      {/* Only show Edit and Delete buttons for FACULTY */}
+                                    
                                       {isFaculty && (
                                         <div>
                                             <Button 
