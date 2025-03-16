@@ -1,14 +1,13 @@
 import { useEffect, useState, useMemo } from "react";
-import { ListGroup } from "react-bootstrap";
-import { BsGripVertical } from "react-icons/bs";
+import { ListGroup, Modal, Button } from "react-bootstrap";
+import { BsGripVertical, BsTrash } from "react-icons/bs";
 import { IoEllipsisVertical } from "react-icons/io5";
 import { FaFileAlt } from "react-icons/fa";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import GreenCheckmark from "../Modules/GreenCheckmark";
 import AssignmentsControls from "./AssignmentsControls";
-import { assignments as fallbackAssignments } from "../../Database";
-import { setAssignments } from "./reducer";
+import { setAssignments, deleteAssignment } from "./reducer";
 
 export default function Assignments() {
     const { cid } = useParams();
@@ -18,13 +17,29 @@ export default function Assignments() {
 
     const [refreshKey, setRefreshKey] = useState(0);
     
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [assignmentToDelete, setAssignmentToDelete] = useState<string | null>(null);
     
+    const { currentUser } = useSelector((state: any) => state.accountReducer || {});
+    const isFaculty = currentUser && currentUser.role === "FACULTY";
+
     useEffect(() => {
         console.log("Assignments component mounted or updated with course ID:", cid);
         console.log("URL path:", location.pathname);
+        try {
+            const storedAssignments = localStorage.getItem('assignments');
+            if (storedAssignments) {
+                const parsedAssignments = JSON.parse(storedAssignments);
+                console.log("Found assignments in localStorage:", parsedAssignments);
+                
+                dispatch(setAssignments(parsedAssignments));
+            }
+        } catch (error) {
+            console.error("Error reading from localStorage:", error);
+        }
         
         setRefreshKey(prevKey => prevKey + 1);
-    }, [cid]);
+    }, [cid, dispatch]);
     
     useEffect(() => {
         console.log("Location changed to:", location.pathname);
@@ -50,13 +65,14 @@ export default function Assignments() {
         }
     }, [location.pathname, dispatch]);
     
+    // getting assignments from Redux
     const allAssignments = useSelector((state: any) => {
         const reduxAssignments = state?.assignmentsReducer?.assignments || [];
         console.log("All assignments from Redux:", reduxAssignments);
-        return reduxAssignments.length > 0 ? reduxAssignments : fallbackAssignments;
+        return reduxAssignments.length > 0 ? reduxAssignments : [];
     });
     
-    
+    // filtering assignments by course ID
     const courseAssignments = useMemo(() => {
         if (!Array.isArray(allAssignments) || !cid) {
             console.log("No assignments array or course ID");
@@ -73,7 +89,6 @@ export default function Assignments() {
                 `match: ${assignmentCourseId === routeCourseId}`
             );
         });
-        
         
         const filtered = allAssignments.filter((a: any) => String(a.course) === String(cid));
         console.log(`Found ${filtered.length} assignments for course ${cid}`);
@@ -100,6 +115,41 @@ export default function Assignments() {
     const handleAssignmentClick = (assignmentId: string) => {
         console.log("Navigating to assignment details:", assignmentId);
         navigate(`/Kambaz/Courses/${cid}/Assignments/${assignmentId}`);
+    };
+    
+    const handleDeleteClick = (e: React.MouseEvent, assignmentId: string) => {
+        e.stopPropagation();
+        e.preventDefault();
+        console.log("Delete clicked for assignment:", assignmentId);
+        setAssignmentToDelete(assignmentId);
+        setShowDeleteModal(true);
+    };
+    
+    const confirmDelete = () => {
+        if (assignmentToDelete) {
+            console.log("Confirming delete for assignment:", assignmentToDelete);
+            dispatch(deleteAssignment(assignmentToDelete));
+            setShowDeleteModal(false);
+            setAssignmentToDelete(null);
+            setTimeout(() => {
+                try {
+                    const storedAssignments = localStorage.getItem('assignments');
+                    if (storedAssignments) {
+                        const parsedAssignments = JSON.parse(storedAssignments);
+                        console.log("Reloading assignments after delete:", parsedAssignments);
+                        dispatch(setAssignments(parsedAssignments));
+                    }
+                } catch (error) {
+                    console.error("Error reading from localStorage after delete:", error);
+                }
+                setRefreshKey(prevKey => prevKey + 1);
+            }, 100);
+        }
+    };
+    
+    const cancelDelete = () => {
+        setShowDeleteModal(false);
+        setAssignmentToDelete(null);
     };
     
     return (
@@ -151,15 +201,12 @@ export default function Assignments() {
                                                 className="text-primary text-decoration-none fs-5"
                                             >
                                                 {(() => {
-                                                    
                                                     if (assignment.title && assignment.title.trim()) {
                                                         return assignment.title;
                                                     }
-                                                    
                                                     if (assignment.name && assignment.name.trim()) {
                                                         return assignment.name;
                                                     }
-                                                    
                                                     return "Untitled Assignment";
                                                 })()}
                                             </a>
@@ -178,10 +225,21 @@ export default function Assignments() {
                                                 {formatDate(assignment.dueDate)} | {assignment.points} pts
                                             </div>
                                         </div>
-                                        <div className="position-absolute end-0 top-50 translate-middle-y me-5">
+                                        <div className="position-absolute d-flex align-items-center" style={{ top: "50%", right: "40px", transform: "translateY(-50%)" }}>
                                             <GreenCheckmark />
+                                            {isFaculty && (
+                                                <button
+                                                    className="btn text-danger border-0 bg-transparent ms-2 me-2"
+                                                    onClick={(e) => handleDeleteClick(e, assignment._id || assignment.id)}
+                                                    title="Delete Assignment"
+                                                    aria-label="Delete Assignment"
+                                                    style={{ fontSize: "1.25rem" }}
+                                                >
+                                                    <BsTrash />
+                                                </button>
+                                            )}
                                         </div>
-                                        <IoEllipsisVertical className="position-absolute end-0 top-50 translate-middle-y me-3" />
+                                        <IoEllipsisVertical className="position-absolute" style={{ top: "50%", right: "15px", transform: "translateY(-50%)" }} />
                                     </div>
                                 </div>
                             ))}
@@ -189,6 +247,23 @@ export default function Assignments() {
                     )}
                 </ListGroup.Item>
             </ListGroup>
+            
+            <Modal show={showDeleteModal} onHide={cancelDelete} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Confirm Delete</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    Are you sure you want to remove this assignment? This action cannot be undone.
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={cancelDelete}>
+                        Cancel
+                    </Button>
+                    <Button variant="danger" onClick={confirmDelete}>
+                        Delete
+                    </Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 }

@@ -5,7 +5,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { addAssignment, updateAssignment } from "./reducer";
 import { v4 as uuidv4 } from "uuid";
-import { assignments as fallbackAssignments } from "../../Database";
 
 interface Assignment {
   _id: string;
@@ -27,7 +26,7 @@ export default function Editor() {
   const isNewAssignment = !aid || aid === "new";
 
   const assignmentsFromRedux = useSelector((state: any) => {
-    return state?.assignmentsReducer?.assignments || fallbackAssignments;
+    return state?.assignmentsReducer?.assignments ;
   });
   
   // checking user's role
@@ -100,9 +99,6 @@ export default function Editor() {
       availableFromDate: `${assignment.availableFromDate}T00:00:00`,
       availableUntilDate: assignment.availableUntilDate ? `${assignment.availableUntilDate}T23:59:00` : ""
     };
-  
-    // console.log("Saving assignment:", formattedAssignment);
-    // console.log("Course ID type:", typeof formattedAssignment.course);
     
     try {
       if (isNewAssignment) {
