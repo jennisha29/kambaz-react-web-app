@@ -12,7 +12,6 @@ export default function Courses() {
   const { cid } = useParams();
   const { courses } = useSelector((state: any) => state.coursesReducer);
   
-  // Find the current course by ID
   const course = courses.find((course: any) => course._id === cid);
   
   const { pathname } = useLocation();

@@ -14,10 +14,9 @@ export default function Dashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
-  // Local state
   const [isEnrollmentView, setIsEnrollmentView] = useState(false);
   
-  // Get data from Redux store
+  // getting data from Redux store
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   const { courses, selectedCourse } = useSelector((state: any) => state.coursesReducer);
   const { enrollments } = useSelector((state: any) => state.enrollmentReducer);
@@ -25,9 +24,9 @@ export default function Dashboard() {
   // checking if the current user has the FACULTY role
   const isFaculty = currentUser?.role === "FACULTY";
   
-  // Filter courses based on enrollment status
+  // filtering courses based on enrollment status
   const filteredCourses = isEnrollmentView 
-    ? courses // Show all courses when in enrollment view
+    ? courses
     : courses.filter((course: any) =>
         enrollments.some(
           (enrollment: any) =>
@@ -44,7 +43,6 @@ export default function Dashboard() {
     )
   ).length;
   
-  // Handlers
   const handleAddCourse = () => {
     dispatch(addCourse());
   };
@@ -83,7 +81,6 @@ export default function Dashboard() {
   
   const handleGoToCourse = (courseId: string, isEnrolled: boolean) => {
     if (isEnrolled) {
-      // Use React Router's navigation instead of window.location
       navigate(`/Kambaz/Courses/${courseId}/Home`);
     } else {
       alert("You must be enrolled in this course to access it.");
@@ -189,7 +186,7 @@ export default function Dashboard() {
                               
                               <div className="p-2">
                                   {isEnrollmentView ? (
-                                      // Enrollment view - show Enroll/Unenroll buttons
+                                      // Enrollment buttons
                                       <div style={{ display: "flex", justifyContent: "space-between", gap: "5px" }}>
                                           <Button 
                                               variant="primary" 
@@ -234,8 +231,7 @@ export default function Dashboard() {
                                           )}
                                       </div>
                                   ) : (
-                                      // Standard view - ONLY Go, Edit, Delete buttons with even spacing
-                                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                                      <div style={{ display: "flex", justifyContent: isFaculty ? "space-between" : "flex-start" }}>
                                           <Button 
                                               variant="primary" 
                                               onClick={() => handleGoToCourse(c._id, isEnrolled)}
@@ -243,20 +239,26 @@ export default function Dashboard() {
                                               Go
                                           </Button>
                                           
-                                          <Button 
-                                              id="wd-edit-course-click"
-                                              className="btn btn-warning"
-                                              onClick={() => handleSetCourse(c)}
-                                          >
-                                              Edit
-                                          </Button>
-                                          <Button 
-                                              variant="danger"
-                                              onClick={() => handleDeleteCourse(c._id)}
-                                              id="wd-delete-course-click"
-                                          >
-                                              Delete
-                                          </Button>
+                                          {isFaculty && (
+                                              <>
+                                                  <div style={{ marginLeft: "auto", display: "flex", gap: "5px" }}>
+                                                      <Button 
+                                                          id="wd-edit-course-click"
+                                                          className="btn btn-warning"
+                                                          onClick={() => handleSetCourse(c)}
+                                                      >
+                                                          Edit
+                                                      </Button>
+                                                      <Button 
+                                                          variant="danger"
+                                                          onClick={() => handleDeleteCourse(c._id)}
+                                                          id="wd-delete-course-click"
+                                                      >
+                                                          Delete
+                                                      </Button>
+                                                  </div>
+                                              </>
+                                          )}
                                       </div>
                                   )}
                               </div>

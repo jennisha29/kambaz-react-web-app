@@ -15,12 +15,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { enrollments } = useSelector((state: any) => state.enrollmentReducer);
   const { cid } = useParams<{ cid: string }>();
 
-  // If user is not logged in, redirect to login
+  // if user is not logged in this will redirect to login page
   if (!currentUser) {
     return <Navigate to="/Kambaz/Account/Login" />;
   }
 
-  // If enrollment is required, check if user is enrolled in the course
   if (requiresEnrollment && cid) {
     const isEnrolled = enrollments.some(
       (enrollment: any) => 

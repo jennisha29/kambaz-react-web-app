@@ -12,15 +12,14 @@ export default function ModuleControlButtons(
     editModule: (moduleId: string) => void 
   }
 ) {
-  // Get the current user from Redux store
+  // gettin the current user from Redux store
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   
-  // Check if the current user has the FACULTY role
+  // checking if the current user has the FACULTY role
   const isFaculty = currentUser?.role === "FACULTY";
   
   return (
     <div className="float-end">
-      {/* Only show edit and delete buttons for FACULTY */}
       {isFaculty && (
         <>
           <FaPencil 

@@ -26,7 +26,6 @@ export default function Profile() {
     fetchProfile(); 
   }, []);
 
-  // If no user, then this will redirect to sign in
   if (!currentUser) {
     return null; 
   }

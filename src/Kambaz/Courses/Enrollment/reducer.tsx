@@ -23,16 +23,15 @@ const enrollmentSlice = createSlice({
   name: "enrollment",
   initialState,
   reducers: {
-    // Get all enrollments
     getEnrollments: (state) => {
       state.enrollments = db.enrollments;
     },
     
-    // Add a new enrollment
+    // adding a new enrollment
     addEnrollment: (state, action: PayloadAction<{ user: string; course: string }>) => {
       const { user, course } = action.payload;
       
-      // Check if enrollment already exists
+      // checking if enrollment already exists
       const exists = state.enrollments.some(
         enrollment => enrollment.user === user && enrollment.course === course
       );
@@ -48,7 +47,7 @@ const enrollmentSlice = createSlice({
       }
     },
     
-    // Delete an enrollment
+    // deleting an enrollment
     deleteEnrollment: (state, action: PayloadAction<{ user: string; course: string }>) => {
       const { user, course } = action.payload;
       
@@ -59,12 +58,10 @@ const enrollmentSlice = createSlice({
   }
 });
 
-// Export actions
 export const {
   getEnrollments,
   addEnrollment,
   deleteEnrollment
 } = enrollmentSlice.actions;
 
-// Export reducer
 export default enrollmentSlice.reducer;
