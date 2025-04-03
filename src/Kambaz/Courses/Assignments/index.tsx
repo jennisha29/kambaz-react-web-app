@@ -8,6 +8,7 @@ import { useSelector, useDispatch } from "react-redux";
 import GreenCheckmark from "../Modules/GreenCheckmark";
 import AssignmentsControls from "./AssignmentsControls";
 import { setAssignments, deleteAssignment } from "./reducer";
+import * as client from "./client";
 
 export default function Assignments() {
     const { cid } = useParams();
@@ -23,47 +24,34 @@ export default function Assignments() {
     const { currentUser } = useSelector((state: any) => state.accountReducer || {});
     const isFaculty = currentUser && currentUser.role === "FACULTY";
 
-    useEffect(() => {
-        console.log("Assignments component mounted or updated with course ID:", cid);
-        console.log("URL path:", location.pathname);
+    // Fetch assignments from the server
+    const fetchAssignments = async () => {
         try {
-            const storedAssignments = localStorage.getItem('assignments');
-            if (storedAssignments) {
-                const parsedAssignments = JSON.parse(storedAssignments);
-                console.log("Found assignments in localStorage:", parsedAssignments);
-                
-                dispatch(setAssignments(parsedAssignments));
+            if (cid) {
+                console.log("Fetching assignments for course:", cid);
+                const fetchedAssignments = await client.findAssignmentsForCourse(cid);
+                console.log("Assignments fetched from server:", fetchedAssignments);
+                dispatch(setAssignments(fetchedAssignments));
+                setRefreshKey(prevKey => prevKey + 1);
             }
         } catch (error) {
-            console.error("Error reading from localStorage:", error);
+            console.error("Error fetching assignments:", error);
         }
-        
-        setRefreshKey(prevKey => prevKey + 1);
+    };
+
+    useEffect(() => {
+        console.log("Assignments component mounted or updated with course ID:", cid);
+        fetchAssignments();
     }, [cid, dispatch]);
     
     useEffect(() => {
         console.log("Location changed to:", location.pathname);
         
-        if (location.pathname.includes('/Assignments')) {
-            console.log("Back on assignments page, loading from localStorage");
-            
-            setTimeout(() => {
-                try {
-                    const storedAssignments = localStorage.getItem('assignments');
-                    if (storedAssignments) {
-                        const parsedAssignments = JSON.parse(storedAssignments);
-                        console.log("Found assignments in localStorage:", parsedAssignments);
-                        
-                        dispatch(setAssignments(parsedAssignments));
-                        
-                        setRefreshKey(prevKey => prevKey + 1);
-                    }
-                } catch (error) {
-                    console.error("Error reading from localStorage:", error);
-                }
-            }, 300);
+        if (location.pathname.includes('/Assignments') && !location.pathname.includes('/Assignments/')) {
+            console.log("Back on assignments page, fetching from server");
+            fetchAssignments();
         }
-    }, [location.pathname, dispatch]);
+    }, [location.pathname]);
     
     // getting assignments from Redux
     const allAssignments = useSelector((state: any) => {
@@ -80,15 +68,6 @@ export default function Assignments() {
         }
     
         console.log(`Filtering for course ID: "${cid}" (${typeof cid})`);
-        
-        allAssignments.forEach((a: any) => {
-            const assignmentCourseId = String(a.course);
-            const routeCourseId = String(cid);
-            console.log(
-                `Assignment "${a.title || a.name}" - course: "${assignmentCourseId}" (${typeof a.course}), ` +
-                `match: ${assignmentCourseId === routeCourseId}`
-            );
-        });
         
         const filtered = allAssignments.filter((a: any) => String(a.course) === String(cid));
         console.log(`Found ${filtered.length} assignments for course ${cid}`);
@@ -125,25 +104,19 @@ export default function Assignments() {
         setShowDeleteModal(true);
     };
     
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (assignmentToDelete) {
-            console.log("Confirming delete for assignment:", assignmentToDelete);
-            dispatch(deleteAssignment(assignmentToDelete));
-            setShowDeleteModal(false);
-            setAssignmentToDelete(null);
-            setTimeout(() => {
-                try {
-                    const storedAssignments = localStorage.getItem('assignments');
-                    if (storedAssignments) {
-                        const parsedAssignments = JSON.parse(storedAssignments);
-                        console.log("Reloading assignments after delete:", parsedAssignments);
-                        dispatch(setAssignments(parsedAssignments));
-                    }
-                } catch (error) {
-                    console.error("Error reading from localStorage after delete:", error);
-                }
-                setRefreshKey(prevKey => prevKey + 1);
-            }, 100);
+            try {
+                console.log("Confirming delete for assignment:", assignmentToDelete);
+                await client.deleteAssignment(assignmentToDelete);
+                dispatch(deleteAssignment(assignmentToDelete));
+                setShowDeleteModal(false);
+                setAssignmentToDelete(null);
+                // Refresh assignments from server after delete
+                fetchAssignments();
+            } catch (error) {
+                console.error("Error deleting assignment:", error);
+            }
         }
     };
     

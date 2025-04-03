@@ -4,41 +4,53 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { setCurrentUser } from "./reducer";
 import { useDispatch } from "react-redux";
-import * as db from "../Database";
+import * as client from "./client";
 
 export default function Signin() {
-  const [credentials, setCredentials] = useState<any>({
-  });
+  const [credentials, setCredentials] = useState<any>({});
+  const [error, setError] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const signin = () => {
-     const user = db.users.find(
-       (u: any) => u.username === credentials.username && u.password === credentials.password);
-     if (!user) return;
-     dispatch(setCurrentUser(user));
-     navigate("/Kambaz/Dashboard");
-   };
-  
+
+  const signin = async () => {
+    try {
+      const user = await client.signin(credentials);
+      if (!user) {
+        setError("Invalid credentials");
+        return;
+      }
+      dispatch(setCurrentUser(user));
+      navigate("/Kambaz/Dashboard");
+    } catch (e) {
+      setError("Sign in failed. Please check your credentials.");
+    }
+  };
+
   return (
     <div id="wd-signin-screen">
       <h2>Sign in</h2>
-      <Form.Control id="wd-username"
+      {error && <div className="alert alert-danger">{error}</div>}
+      <Form.Control
+        id="wd-username"
         placeholder="username"
         className="mb-2"
         defaultValue={credentials.username}
         onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
       />
-      <Form.Control id="wd-password"
-        placeholder="password" type="password"
+      <Form.Control
+        id="wd-password"
+        placeholder="password"
+        type="password"
         className="mb-2"
         defaultValue={credentials.password}
         onChange={(e) => setCredentials({
           ...credentials,
-          password: e.target.value })}
+          password: e.target.value
+        })}
       />
-      <Button 
-        onClick={signin} 
-        id="wd-signin-btn" 
+      <Button
+        onClick={signin}
+        id="wd-signin-btn"
         className="btn btn-primary w-100 mb-2"
       >
         Sign in

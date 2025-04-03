@@ -1,10 +1,9 @@
-import {useState} from "react";
-import {useEffect} from "react";
+import { useState, useEffect } from "react";
 import { Form, Button, Row, Col } from "react-bootstrap";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { addAssignment, updateAssignment } from "./reducer";
-import { v4 as uuidv4 } from "uuid";
+import * as client from "./client";
 
 interface Assignment {
   _id: string;
@@ -25,13 +24,10 @@ export default function Editor() {
   const dispatch = useDispatch();
   const isNewAssignment = !aid || aid === "new";
 
-  const assignmentsFromRedux = useSelector((state: any) => {
-    return state?.assignmentsReducer?.assignments ;
-  });
-  
   // checking user's role
   const { currentUser } = useSelector((state: any) => state?.accountReducer || {});
   const isFaculty = currentUser?.role === "FACULTY";
+  
   useEffect(() => {
     if (!isFaculty) {
       navigate(`/Kambaz/Courses/${cid}/Assignments`);
@@ -57,24 +53,33 @@ export default function Editor() {
     studentAnnotation: false,
     fileUploads: false
   });
+  
+  // Fetch assignment data when editing
   useEffect(() => {
-    if (!isNewAssignment) {
-      console.log("Looking for assignment with ID:", aid);
-      
-      const existingAssignment = assignmentsFromRedux.find((a: Assignment) => a._id === aid);
-      console.log("Found assignment:", existingAssignment);
-      
-      if (existingAssignment) {
-        setAssignment({
-          ...existingAssignment,
-          dueDate: formatDateForInput(existingAssignment.dueDate),
-          availableFromDate: formatDateForInput(existingAssignment.availableFromDate),
-          availableUntilDate: existingAssignment.availableUntilDate ? 
-            formatDateForInput(existingAssignment.availableUntilDate) : ""
-        });
+    const fetchAssignment = async () => {
+      if (!isNewAssignment && aid) {
+        try {
+          console.log("Fetching assignment with ID:", aid);
+          const fetchedAssignment = await client.findAssignmentById(aid);
+          console.log("Assignment data retrieved:", fetchedAssignment);
+          
+          if (fetchedAssignment) {
+            setAssignment({
+              ...fetchedAssignment,
+              dueDate: formatDateForInput(fetchedAssignment.dueDate),
+              availableFromDate: formatDateForInput(fetchedAssignment.availableFromDate),
+              availableUntilDate: fetchedAssignment.availableUntilDate ? 
+                formatDateForInput(fetchedAssignment.availableUntilDate) : ""
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching assignment:", error);
+        }
       }
-    }
-  }, [aid, assignmentsFromRedux, isNewAssignment]);
+    };
+    
+    fetchAssignment();
+  }, [aid, isNewAssignment]);
   
   const formatDateForInput = (dateString: string): string => {
     try {
@@ -85,16 +90,15 @@ export default function Editor() {
     }
   };
   
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!assignment.title.trim()) {
       alert("Assignment Name is required");
       return;
     }
+    
     const formattedAssignment = {
       ...assignment,
-      _id: isNewAssignment ? `assignment_${uuidv4()}` : assignment._id,
       course: String(cid),
-
       dueDate: `${assignment.dueDate}T23:59:00`,
       availableFromDate: `${assignment.availableFromDate}T00:00:00`,
       availableUntilDate: assignment.availableUntilDate ? `${assignment.availableUntilDate}T23:59:00` : ""
@@ -102,19 +106,18 @@ export default function Editor() {
     
     try {
       if (isNewAssignment) {
-        dispatch(addAssignment(formattedAssignment));
-        console.log("New assignment added to Redux");
+        // Create new assignment on server
+        const newAssignment = await client.createAssignment(cid as string, formattedAssignment);
+        console.log("New assignment created on server:", newAssignment);
+        dispatch(addAssignment(newAssignment));
       } else {
-        dispatch(updateAssignment(formattedAssignment));
-        console.log("Assignment updated in Redux");
+        // Update existing assignment on server
+        const updatedAssignment = await client.updateAssignment(formattedAssignment);
+        console.log("Assignment updated on server:", updatedAssignment);
+        dispatch(updateAssignment(updatedAssignment));
       }
       
-      const currentAssignments = localStorage.getItem('assignments');
-      console.log("Current assignments in localStorage after save:", currentAssignments);
-      
-      setTimeout(() => {
-        navigate(`/Kambaz/Courses/${cid}/Assignments`);
-      }, 300);
+      navigate(`/Kambaz/Courses/${cid}/Assignments`);
     } catch (error) {
       console.error("Error saving assignment:", error);
       alert("Error saving assignment. Please try again.");
@@ -122,7 +125,6 @@ export default function Editor() {
   };
   
   const handleCancel = () => {
-    
     navigate(`/Kambaz/Courses/${cid}/Assignments`);
   };
   
