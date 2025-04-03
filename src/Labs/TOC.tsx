@@ -29,5 +29,10 @@ export default function TOC() {
           href="https://github.com/jennisha29/kambaz-react-web-app/tree/a4/src"
           >My GitHub</Nav.Link>
         </Nav.Item>
+        <Nav.Item>
+          <Nav.Link id="wd-github"
+          href="https://github.com/jennisha29/kambaz-node-server-app"
+          >New GitHub repo</Nav.Link>
+        </Nav.Item>
       </Nav>
    );}
