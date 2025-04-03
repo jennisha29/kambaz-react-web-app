@@ -5,17 +5,17 @@ import { useSelector, useDispatch } from "react-redux";
 import { addAssignment, updateAssignment } from "./reducer";
 import * as client from "./client";
 
-interface Assignment {
-  _id: string;
-  title: string;
-  description: string;
-  points: number;
-  dueDate: string;
-  availableFromDate: string;
-  availableUntilDate?: string;
-  course: string;
-  module?: string;
-}
+// interface Assignment {
+//   _id: string;
+//   title: string;
+//   description: string;
+//   points: number;
+//   dueDate: string;
+//   availableFromDate: string;
+//   availableUntilDate?: string;
+//   course: string;
+//   module?: string;
+// }
 
 export default function Editor() {
   const { aid, cid } = useParams();

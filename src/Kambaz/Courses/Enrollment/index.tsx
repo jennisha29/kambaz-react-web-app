@@ -35,7 +35,7 @@ export default function Enrollments() {
         
         // Fetch user's enrollments and update Redux store
         if (currentUser) {
-          const userEnrollments = await enrollmentClient.findEnrollmentsForUser(currentUser._id);
+          await enrollmentClient.findEnrollmentsForUser(currentUser._id);
           dispatch(getEnrollments());
         }
         
@@ -60,14 +60,9 @@ export default function Enrollments() {
   const handleEnroll = async (courseId: string) => {
     try {
       if (currentUser) {
-        // Call API to enroll user
         await enrollmentClient.enrollUserInCourse(currentUser._id, courseId);
-        
-        // Update Redux store
         dispatch(addEnrollment({ user: currentUser._id, course: courseId }));
-        
-        // Refresh enrollments to ensure UI is updated
-        const userEnrollments = await enrollmentClient.findEnrollmentsForUser(currentUser._id);
+        await enrollmentClient.findEnrollmentsForUser(currentUser._id);
         dispatch(getEnrollments());
       }
     } catch (error) {
@@ -79,14 +74,9 @@ export default function Enrollments() {
   const handleUnenroll = async (courseId: string) => {
     try {
       if (currentUser) {
-        // Call API to unenroll user
         await enrollmentClient.unenrollUserFromCourse(currentUser._id, courseId);
-        
-        // Update Redux store
         dispatch(deleteEnrollment({ user: currentUser._id, course: courseId }));
-        
-        // Refresh enrollments to ensure UI is updated
-        const userEnrollments = await enrollmentClient.findEnrollmentsForUser(currentUser._id);
+        await enrollmentClient.findEnrollmentsForUser(currentUser._id);
         dispatch(getEnrollments());
       }
     } catch (error) {
@@ -96,11 +86,9 @@ export default function Enrollments() {
   
   // Navigate to course content
   const handleCourseAccess = (courseId: string) => {
-    // Faculty can access all courses, others need to be enrolled
     if (isFaculty || isEnrolled(courseId)) {
       navigate(`/Kambaz/Courses/${courseId}/Home`);
     } else {
-      // Show the access modal for non-enrolled users
       setShowAccessModal(true);
     }
   };
@@ -147,7 +135,6 @@ export default function Enrollments() {
     alert("Update course functionality would be implemented here");
   };
   
-  // Loading state
   if (loading) {
     return <div>Loading courses...</div>;
   }
@@ -156,10 +143,7 @@ export default function Enrollments() {
     <div>
       <div className="d-flex justify-content-between align-items-center">
         <h1>Dashboard</h1>
-        <Button
-          variant="primary"
-          onClick={handleEnrollmentButtonClick}
-        >
+        <Button variant="primary" onClick={handleEnrollmentButtonClick}>
           Enrollment
         </Button>
       </div>
@@ -170,36 +154,29 @@ export default function Enrollments() {
           <div className="d-flex justify-content-between align-items-center">
             <h5>New Course</h5>
             <div>
-              <Button 
-                variant="warning" 
-                className="me-2"
-                onClick={handleUpdateCourse}
-              >
+              <Button variant="warning" className="me-2" onClick={handleUpdateCourse}>
                 Update
               </Button>
-              <Button 
-                variant="primary"
-                onClick={handleAddCourse}
-              >
+              <Button variant="primary" onClick={handleAddCourse}>
                 Add
               </Button>
             </div>
           </div>
           
-          <Form.Control 
+          <Form.Control
             type="text"
             placeholder="New Course"
             className="mb-2 mt-3"
             value={newCourse.name}
-            onChange={(e) => setNewCourse({...newCourse, name: e.target.value})}
+            onChange={(e) => setNewCourse({ ...newCourse, name: e.target.value })}
           />
           
-          <Form.Control 
+          <Form.Control
             as="textarea"
             rows={3}
             placeholder="New Description"
             value={newCourse.description}
-            onChange={(e) => setNewCourse({...newCourse, description: e.target.value})}
+            onChange={(e) => setNewCourse({ ...newCourse, description: e.target.value })}
           />
           <hr />
         </>
@@ -229,45 +206,22 @@ export default function Enrollments() {
               </div>
               
               <div className="p-2 d-flex gap-1">
-                <Button 
-                  variant="primary" 
-                  size="sm"
-                  onClick={() => handleCourseAccess(course._id)}
-                >
+                <Button variant="primary" size="sm" onClick={() => handleCourseAccess(course._id)}>
                   Go
                 </Button>
-                
                 {isEnrolled(course._id) ? (
-                  <Button 
-                    variant="danger" 
-                    size="sm"
-                    onClick={() => handleUnenroll(course._id)}
-                  >
+                  <Button variant="danger" size="sm" onClick={() => handleUnenroll(course._id)}>
                     Unenroll
                   </Button>
                 ) : (
-                  <Button 
-                    variant="success" 
-                    size="sm"
-                    onClick={() => handleEnroll(course._id)}
-                  >
+                  <Button variant="success" size="sm" onClick={() => handleEnroll(course._id)}>
                     Enroll
                   </Button>
                 )}
-                
-                <Button 
-                  variant="warning" 
-                  size="sm"
-                  onClick={() => handleEditCourse(course)}
-                >
+                <Button variant="warning" size="sm" onClick={() => handleEditCourse(course)}>
                   Edit
                 </Button>
-                
-                <Button 
-                  variant="danger" 
-                  size="sm"
-                  onClick={() => handleDeleteClick(course._id)}
-                >
+                <Button variant="danger" size="sm" onClick={() => handleDeleteClick(course._id)}>
                   Delete
                 </Button>
               </div>
@@ -277,15 +231,13 @@ export default function Enrollments() {
       </Row>
       
       {/* Delete Confirmation Modal */}
-      <Modal 
-        show={showDeleteModal} 
-        onHide={() => setShowDeleteModal(false)}
-        centered
-      >
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Confirm Delete</Modal.Title>
         </Modal.Header>
-        <Modal.Body>Are you sure you want to delete this course? This action cannot be undone.</Modal.Body>
+        <Modal.Body>
+          Are you sure you want to delete this course? This action cannot be undone.
+        </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
             Cancel
@@ -305,11 +257,7 @@ export default function Enrollments() {
       >
         <Modal.Body className="bg-dark text-white text-center p-4">
           <p>You must be enrolled in this course to access it.</p>
-          <Button 
-            variant="light" 
-            className="rounded-pill px-4"
-            onClick={() => setShowAccessModal(false)}
-          >
+          <Button variant="light" className="rounded-pill px-4" onClick={() => setShowAccessModal(false)}>
             OK
           </Button>
         </Modal.Body>
