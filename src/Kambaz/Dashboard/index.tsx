@@ -1,74 +1,59 @@
 import { Link, useNavigate } from "react-router-dom";
-import { Card, Row, Col, Button, FormControl, Modal } from "react-bootstrap";
+import { Card, Row, Col, Button, FormControl } from "react-bootstrap";
 import { useSelector, useDispatch } from "react-redux";
 import { useState, useEffect } from "react";
 import { 
   addCourse, 
   deleteCourse, 
   updateCourse, 
-  setSelectedCourse,
-  Course
+  setSelectedCourse 
 } from "../Courses/reducer";
-import { addEnrollment, deleteEnrollment, getEnrollments } from "../Courses/Enrollment/reducer";
-import * as courseClient from "../Courses/client";
-import * as enrollmentClient from "../Courses/Enrollment/client";
+import * as coursesClient from "../Courses/client";
 import * as userClient from "../Account/client";
+import * as enrollmentClient from "../Courses/Enrollment/client";
 
 export default function Dashboard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
   const [isEnrollmentView, setIsEnrollmentView] = useState(false);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
-  const [showAccessModal, setShowAccessModal] = useState(false);
   
-  // for getting data from Redux store
   const { currentUser } = useSelector((state: any) => state.accountReducer);
   const { selectedCourse } = useSelector((state: any) => state.coursesReducer);
   const { enrollments } = useSelector((state: any) => state.enrollmentReducer);
   
   // checking if the current user has the FACULTY role
   const isFaculty = currentUser?.role === "FACULTY";
-  
-  // fetching from the server
+
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
+      if (!currentUser) return;
+      
       try {
         setLoading(true);
-        const allCourses = await courseClient.fetchAllCourses();
+        const userCourses = await userClient.findMyCourses();
+        const allCourses = await coursesClient.fetchAllCourses();
+        
+        const userEnrollments = await enrollmentClient.findEnrollmentsForUser(currentUser._id);
+        
         setCourses(allCourses);
+        dispatch({ type: "enrollment/getEnrollments", payload: userEnrollments });
+        
         setLoading(false);
       } catch (error) {
-        console.error("Error fetching courses:", error);
+        console.error("Error fetching data:", error);
         setLoading(false);
       }
     };
     
-    fetchCourses();
-  }, []);
-  
-  // fetching the enrollments from the server
-  useEffect(() => {
-    const fetchEnrollments = async () => {
-      if (currentUser) {
-        try {
-          await enrollmentClient.findEnrollmentsForUser(currentUser._id);
-          dispatch(getEnrollments());
-        } catch (error) {
-          console.error("Error fetching enrollments:", error);
-        }
-      }
-    };
-    
-    fetchEnrollments();
+    fetchData();
   }, [currentUser, dispatch]);
   
 
   const filteredCourses = isEnrollmentView 
-    ? courses 
+    ? courses
     : courses.filter((course: any) =>
         enrollments.some(
           (enrollment: any) =>
@@ -87,13 +72,9 @@ export default function Dashboard() {
   
   const handleAddCourse = async () => {
     try {
-      if (!selectedCourse.name) return;
-      
-      
       const newCourse = await userClient.createCourse(selectedCourse);
+      dispatch(addCourse(newCourse));
       setCourses([...courses, newCourse]);
-      
-      dispatch(addCourse());
     } catch (error) {
       console.error("Error adding course:", error);
     }
@@ -101,38 +82,29 @@ export default function Dashboard() {
   
   const handleUpdateCourse = async () => {
     try {
-      if (!selectedCourse._id || selectedCourse._id === "0") return;
-      await courseClient.updateCourse(selectedCourse);
-      setCourses(
-        courses.map(c => c._id === selectedCourse._id ? selectedCourse : c)
-      );
-      
+      await coursesClient.updateCourse(selectedCourse);
       dispatch(updateCourse());
+      
+      
+      setCourses(courses.map(c => 
+        c._id === selectedCourse._id ? selectedCourse : c
+      ));
     } catch (error) {
       console.error("Error updating course:", error);
     }
   };
   
-  const handleDeleteConfirm = async () => {
+  const handleDeleteCourse = async (courseId: string) => {
     try {
-      if (!courseToDelete) return;
-      
-      await courseClient.deleteCourse(courseToDelete);
-      setCourses(courses.filter(c => c._id !== courseToDelete));
-      dispatch(deleteCourse(courseToDelete));
-      setShowDeleteModal(false);
-      setCourseToDelete(null);
+      await coursesClient.deleteCourse(courseId);
+      dispatch(deleteCourse(courseId));
+      setCourses(courses.filter(c => c._id !== courseId));
     } catch (error) {
       console.error("Error deleting course:", error);
     }
   };
   
-  const handleDeleteClick = (courseId: string) => {
-    setCourseToDelete(courseId);
-    setShowDeleteModal(true);
-  };
-  
-  const handleSetCourse = (course: Course) => {
+  const handleSetCourse = (course: any) => {
     dispatch(setSelectedCourse(course));
   };
   
@@ -146,12 +118,8 @@ export default function Dashboard() {
   
   const handleEnroll = async (courseId: string) => {
     try {
-      if (!currentUser) return;
-      await enrollmentClient.enrollUserInCourse(currentUser._id, courseId);
-      dispatch(addEnrollment({ user: currentUser._id, course: courseId }));
-      
-      await enrollmentClient.findEnrollmentsForUser(currentUser._id);
-      dispatch(getEnrollments());
+      const enrollment = await enrollmentClient.enrollUserInCourse(currentUser._id, courseId);
+      dispatch({ type: "enrollment/addEnrollment", payload: { user: currentUser._id, course: courseId } });
     } catch (error) {
       console.error("Error enrolling in course:", error);
     }
@@ -159,12 +127,8 @@ export default function Dashboard() {
   
   const handleUnenroll = async (courseId: string) => {
     try {
-      if (!currentUser) return;
       await enrollmentClient.unenrollUserFromCourse(currentUser._id, courseId);
-      dispatch(deleteEnrollment({ user: currentUser._id, course: courseId }));
-      
-      await enrollmentClient.findEnrollmentsForUser(currentUser._id);
-      dispatch(getEnrollments());
+      dispatch({ type: "enrollment/deleteEnrollment", payload: { user: currentUser._id, course: courseId } });
     } catch (error) {
       console.error("Error unenrolling from course:", error);
     }
@@ -176,9 +140,10 @@ export default function Dashboard() {
   
   const handleGoToCourse = (courseId: string, isEnrolled: boolean) => {
     if (isEnrolled) {
+    
       navigate(`/Kambaz/Courses/${courseId}/Home`);
     } else {
-      setShowAccessModal(true);
+      alert("You must be enrolled in this course to access it.");
     }
   };
   
@@ -221,7 +186,7 @@ export default function Dashboard() {
           </h5><br />
           
           <FormControl 
-              value={selectedCourse?.name || ""}
+              value={selectedCourse.name} 
               onChange={handleCourseNameChange}
               className="mb-2" 
               placeholder="Course Name"
@@ -230,7 +195,7 @@ export default function Dashboard() {
           <FormControl 
               as="textarea"
               rows={3}
-              value={selectedCourse?.description || ""}
+              value={selectedCourse.description} 
               onChange={handleCourseDescriptionChange}
               placeholder="Course Description"
           />
@@ -243,7 +208,7 @@ export default function Dashboard() {
       </h2> <hr />
       <div id="wd-dashboard-courses">
           <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-              {filteredCourses.map((c: Course) => {
+              {filteredCourses.map((c: any) => {
                   const isEnrolled = enrollments.some(
                       (enrollment: any) =>
                           enrollment.user === currentUser?._id &&
@@ -253,11 +218,13 @@ export default function Dashboard() {
                   return (
                       <Col key={c._id} className="wd-dashboard-course" style={{ width: "320px" }}>
                           <Card>
-                              <Link to="#"
+                              <Link to={isEnrolled ? `/Kambaz/Courses/${c._id}/Home` : "#"}
                                   className="wd-dashboard-course-link text-decoration-none text-dark"
                                   onClick={(e) => {
-                                      e.preventDefault();
-                                      handleGoToCourse(c._id, isEnrolled);
+                                      if (!isEnrolled) {
+                                          e.preventDefault();
+                                          alert("You must be enrolled in this course to access it.");
+                                      }
                                   }}>
                                   <Card.Img 
                                       variant="top" 
@@ -319,7 +286,7 @@ export default function Dashboard() {
                                                   </Button>
                                                   <Button 
                                                       variant="danger"
-                                                      onClick={() => handleDeleteClick(c._id)}
+                                                      onClick={() => handleDeleteCourse(c._id)}
                                                       id="wd-delete-course-click"
                                                   >
                                                       Delete
@@ -328,7 +295,7 @@ export default function Dashboard() {
                                           )}
                                       </div>
                                   ) : (
-                                     
+                                      
                                       <div style={{ display: "flex" }}>
                                           <Button 
                                               variant="primary" 
@@ -349,7 +316,7 @@ export default function Dashboard() {
                                                   </Button>
                                                   <Button 
                                                       variant="danger"
-                                                      onClick={() => handleDeleteClick(c._id)}
+                                                      onClick={() => handleDeleteCourse(c._id)}
                                                       id="wd-delete-course-click"
                                                   >
                                                       Delete
@@ -365,37 +332,6 @@ export default function Dashboard() {
               })}
           </Row>
       </div>
-      
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Confirm Deletion</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Are you sure you want to delete this course? This action cannot be undone.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
-            Cancel
-          </Button>
-          <Button variant="danger" onClick={handleDeleteConfirm}>
-            Delete
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      
-      <Modal show={showAccessModal} onHide={() => setShowAccessModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Access Denied</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          You have to enroll in the course to access it.
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="primary" onClick={() => setShowAccessModal(false)}>
-            OK
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </div>
   );
 }

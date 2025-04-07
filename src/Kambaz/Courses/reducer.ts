@@ -32,7 +32,7 @@ const initialState: CoursesState = {
   selectedCourse: initialCourse
 };
 
-// creating the slice
+
 const coursesSlice = createSlice({
   name: "courses",
   initialState,
@@ -41,21 +41,19 @@ const coursesSlice = createSlice({
       state.courses = db.courses;
     },
     
-    // adding a new course
+    
     addCourse: (state) => {
       const newCourse = { ...state.selectedCourse, _id: uuidv4() };
       state.courses.push(newCourse);
       state.selectedCourse = initialCourse;
     },
     
-    // deleting a course
     deleteCourse: (state, action: PayloadAction<string>) => {
       state.courses = state.courses.filter(
         (course) => course._id !== action.payload
       );
     },
     
-    // updating a course
     updateCourse: (state) => {
       state.courses = state.courses.map((course) => {
         if (course._id === state.selectedCourse._id) {
@@ -65,12 +63,10 @@ const coursesSlice = createSlice({
       });
     },
     
-    // editing
     setSelectedCourse: (state, action: PayloadAction<Course>) => {
       state.selectedCourse = action.payload;
     },
     
-    // resetting the form
     resetSelectedCourse: (state) => {
       state.selectedCourse = initialCourse;
     }

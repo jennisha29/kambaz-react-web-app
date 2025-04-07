@@ -12,10 +12,8 @@ export default function ModuleControlButtons(
     editModule: (moduleId: string) => void 
   }
 ) {
-  // gettin the current user from Redux store
-  const { currentUser } = useSelector((state: any) => state.accountReducer);
   
-  // checking if the current user has the FACULTY role
+  const { currentUser } = useSelector((state: any) => state.accountReducer);
   const isFaculty = currentUser?.role === "FACULTY";
   
   return (
