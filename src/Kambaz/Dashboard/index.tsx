@@ -1,179 +1,190 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { Card, Row, Col, Button, FormControl, Modal } from "react-bootstrap";
 import { useSelector, useDispatch } from "react-redux";
-import { Card, Row, Col, Button, FormControl, Modal, Alert } from "react-bootstrap";
-import * as enrollmentClient from "../Courses/Enrollment/client";
-import { getEnrollments, addEnrollment, deleteEnrollment } from "../Courses/Enrollment/reducer";
-
-interface DashboardProps {
-  courses: any[];
-  course?: any;
-  setCourse?: (course: any) => void;
-  addNewCourse?: () => void;
-  deleteCourse?: (id: string) => void;
-  updateCourse?: () => void;
-}
-
-export default function Dashboard({ 
-  courses, 
-  course, 
-  setCourse, 
-  addNewCourse, 
+import { useState, useEffect } from "react";
+import { 
+  addCourse, 
   deleteCourse, 
-  updateCourse 
-}: DashboardProps) {
-  const navigate = useNavigate();
+  updateCourse, 
+  setSelectedCourse,
+  Course
+} from "../Courses/reducer";
+import { addEnrollment, deleteEnrollment, getEnrollments } from "../Courses/Enrollment/reducer";
+import * as courseClient from "../Courses/client";
+import * as enrollmentClient from "../Courses/Enrollment/client";
+import * as userClient from "../Account/client";
+
+export default function Dashboard() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  
+  const [isEnrollmentView, setIsEnrollmentView] = useState(false);
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
+  const [showAccessModal, setShowAccessModal] = useState(false);
+  
+  // for getting data from Redux store
   const { currentUser } = useSelector((state: any) => state.accountReducer);
+  const { selectedCourse } = useSelector((state: any) => state.coursesReducer);
   const { enrollments } = useSelector((state: any) => state.enrollmentReducer);
   
-  // State
-  const [isEnrollmentView, setIsEnrollmentView] = useState(false);
-  const [showEnrollmentModal, setShowEnrollmentModal] = useState(false);
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [alertVariant, setAlertVariant] = useState<string>("success");
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  
-  // Check if user is faculty
+  // checking if the current user has the FACULTY role
   const isFaculty = currentUser?.role === "FACULTY";
   
-  // Fetch fresh enrollment data when component mounts
+  // fetching from the server
   useEffect(() => {
-    const refreshEnrollments = async () => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        const allCourses = await courseClient.fetchAllCourses();
+        setCourses(allCourses);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching courses:", error);
+        setLoading(false);
+      }
+    };
+    
+    fetchCourses();
+  }, []);
+  
+  // fetching the enrollments from the server
+  useEffect(() => {
+    const fetchEnrollments = async () => {
       if (currentUser) {
         try {
-          setIsLoading(true);
-          // Get enrollments from server and pass to reducer
-          const userEnrollments = await enrollmentClient.findEnrollmentsForUser(currentUser._id);
-          dispatch(getEnrollments(userEnrollments));
+          await enrollmentClient.findEnrollmentsForUser(currentUser._id);
+          dispatch(getEnrollments());
         } catch (error) {
           console.error("Error fetching enrollments:", error);
-          setAlertVariant("danger");
-          setAlertMessage("Error loading enrollments. Please try again.");
-        } finally {
-          setIsLoading(false);
         }
       }
     };
     
-    refreshEnrollments();
+    fetchEnrollments();
   }, [currentUser, dispatch]);
   
-  // Toggle between enrolled courses and all courses
+
+  const filteredCourses = isEnrollmentView 
+    ? courses 
+    : courses.filter((course: any) =>
+        enrollments.some(
+          (enrollment: any) =>
+            enrollment.user === currentUser?._id &&
+            enrollment.course === course._id
+        )
+      );
+  
+  const enrolledCoursesCount = courses.filter((course: any) =>
+    enrollments.some(
+      (enrollment: any) =>
+        enrollment.user === currentUser?._id &&
+        enrollment.course === course._id
+    )
+  ).length;
+  
+  const handleAddCourse = async () => {
+    try {
+      if (!selectedCourse.name) return;
+      
+      
+      const newCourse = await userClient.createCourse(selectedCourse);
+      setCourses([...courses, newCourse]);
+      
+      dispatch(addCourse());
+    } catch (error) {
+      console.error("Error adding course:", error);
+    }
+  };
+  
+  const handleUpdateCourse = async () => {
+    try {
+      if (!selectedCourse._id || selectedCourse._id === "0") return;
+      await courseClient.updateCourse(selectedCourse);
+      setCourses(
+        courses.map(c => c._id === selectedCourse._id ? selectedCourse : c)
+      );
+      
+      dispatch(updateCourse());
+    } catch (error) {
+      console.error("Error updating course:", error);
+    }
+  };
+  
+  const handleDeleteConfirm = async () => {
+    try {
+      if (!courseToDelete) return;
+      
+      await courseClient.deleteCourse(courseToDelete);
+      setCourses(courses.filter(c => c._id !== courseToDelete));
+      dispatch(deleteCourse(courseToDelete));
+      setShowDeleteModal(false);
+      setCourseToDelete(null);
+    } catch (error) {
+      console.error("Error deleting course:", error);
+    }
+  };
+  
+  const handleDeleteClick = (courseId: string) => {
+    setCourseToDelete(courseId);
+    setShowDeleteModal(true);
+  };
+  
+  const handleSetCourse = (course: Course) => {
+    dispatch(setSelectedCourse(course));
+  };
+  
+  const handleCourseNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setSelectedCourse({ ...selectedCourse, name: e.target.value }));
+  };
+  
+  const handleCourseDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dispatch(setSelectedCourse({ ...selectedCourse, description: e.target.value }));
+  };
+  
+  const handleEnroll = async (courseId: string) => {
+    try {
+      if (!currentUser) return;
+      await enrollmentClient.enrollUserInCourse(currentUser._id, courseId);
+      dispatch(addEnrollment({ user: currentUser._id, course: courseId }));
+      
+      await enrollmentClient.findEnrollmentsForUser(currentUser._id);
+      dispatch(getEnrollments());
+    } catch (error) {
+      console.error("Error enrolling in course:", error);
+    }
+  };
+  
+  const handleUnenroll = async (courseId: string) => {
+    try {
+      if (!currentUser) return;
+      await enrollmentClient.unenrollUserFromCourse(currentUser._id, courseId);
+      dispatch(deleteEnrollment({ user: currentUser._id, course: courseId }));
+      
+      await enrollmentClient.findEnrollmentsForUser(currentUser._id);
+      dispatch(getEnrollments());
+    } catch (error) {
+      console.error("Error unenrolling from course:", error);
+    }
+  };
+
   const toggleEnrollmentView = () => {
     setIsEnrollmentView(!isEnrollmentView);
   };
   
-  // Check if user is enrolled in a course
-  const isEnrolled = (courseId: string) => {
-    return enrollments.some(
-      (enrollment: any) => 
-        enrollment.user === currentUser?._id && 
-        enrollment.course === courseId
-    );
-  };
-  
-  // Handle course access
-  const handleCourseAccess = (courseId: string) => {
-    if (isFaculty || isEnrolled(courseId)) {
+  const handleGoToCourse = (courseId: string, isEnrolled: boolean) => {
+    if (isEnrolled) {
       navigate(`/Kambaz/Courses/${courseId}/Home`);
     } else {
-      setShowEnrollmentModal(true);
-    }
-  };
-
-  
-  
-  // Handle enrollment
-  const handleEnroll = async (courseId: string) => {
-    if (!currentUser) return;
-    
-    try {
-      setIsLoading(true);
-      
-      // Call REST API to enroll user
-      const enrollmentResult = await enrollmentClient.enrollUserInCourse(currentUser._id, courseId);
-      
-      // Check if enrollment was successful
-      if (enrollmentResult && enrollmentResult._id) {
-        // Update Redux store with the actual enrollment from server
-        dispatch(addEnrollment({ 
-          user: currentUser._id, 
-          course: courseId 
-        }));
-        
-        setAlertVariant("success");
-        setAlertMessage("Successfully enrolled in the course!");
-      } else if (enrollmentResult && enrollmentResult.status === "USER_ALREADY_ENROLLED") {
-        setAlertVariant("warning");
-        setAlertMessage("You are already enrolled in this course.");
-      } else {
-        setAlertVariant("danger");
-        setAlertMessage("Failed to enroll in course. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error enrolling in course:", error);
-      setAlertVariant("danger");
-      setAlertMessage("Failed to enroll in course. Please try again.");
-    } finally {
-      setIsLoading(false);
-      
-      // Auto-dismiss the alert after 3 seconds
-      setTimeout(() => {
-        setAlertMessage(null);
-      }, 3000);
+      setShowAccessModal(true);
     }
   };
   
-  // Handle unenrollment
-  const handleUnenroll = async (courseId: string) => {
-    if (!currentUser) return;
-    
-    try {
-      setIsLoading(true);
-      
-      // Call REST API to unenroll user
-      const result = await enrollmentClient.unenrollUserFromCourse(currentUser._id, courseId);
-      
-      // Check status code for successful deletion (204 No Content)
-      if (result === 204 || result === 200) {
-        // Update Redux store - remove enrollment
-        dispatch(deleteEnrollment({ 
-          user: currentUser._id, 
-          course: courseId 
-        }));
-        
-        setAlertVariant("success");
-        setAlertMessage("Successfully unenrolled from the course!");
-      } else {
-        setAlertVariant("danger");
-        setAlertMessage("Failed to unenroll from course. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error unenrolling from course:", error);
-      setAlertVariant("danger");
-      setAlertMessage("Failed to unenroll from course. Please try again.");
-    } finally {
-      setIsLoading(false);
-      
-      // Auto-dismiss the alert after 3 seconds
-      setTimeout(() => {
-        setAlertMessage(null);
-      }, 3000);
-    }
-  };
-  
-  // Filter courses based on enrollment status and view
-  const filteredCourses = isEnrollmentView 
-    ? courses // Show all courses in enrollment view
-    : isFaculty 
-      ? courses // Faculty sees all courses in regular view
-      : courses.filter(c => isEnrolled(c._id)); // Students see only enrolled courses in regular view
-  
-  // Count enrolled courses for the user
-  const enrolledCoursesCount = isFaculty 
-    ? courses.length 
-    : courses.filter(c => isEnrolled(c._id)).length;
+  if (loading) {
+    return <div>Loading courses...</div>;
+  }
   
   return (
     <div id="wd-dashboard" style={{ position: "relative" }}>
@@ -187,160 +198,200 @@ export default function Dashboard({
       
       <h1 id="wd-dashboard-title">Dashboard</h1> <hr />
       
-      {alertMessage && (
-        <Alert variant={alertVariant} onClose={() => setAlertMessage(null)} dismissible>
-          {alertMessage}
-        </Alert>
-      )}
-      
       {isFaculty && (
         <>
           <h5>
-            New Course
-            <Button 
-              variant="primary"
-              className="float-end"
-              onClick={addNewCourse}
-            >
-              Add
-            </Button>
-            <Button 
-              variant="warning"
-              className="float-end me-2"
-              onClick={updateCourse}
-            >
-              Update
-            </Button>
-          </h5>
-          <br />
+              New Course
+              <Button 
+                  variant="primary"
+                  className="float-end"
+                  onClick={handleAddCourse}
+                  id="wd-add-new-course-click"
+              >
+                  Add
+              </Button>
+              <Button 
+                  variant="warning"
+                  className="float-end me-2"
+                  onClick={handleUpdateCourse}
+                  id="wd-update-course-click"
+              >
+                  Update
+              </Button>
+          </h5><br />
           
           <FormControl 
-            className="mb-2"
-            placeholder="Course Name" 
-            value={course?.name || ""}
-            onChange={(e) => setCourse && setCourse({...course, name: e.target.value})}
+              value={selectedCourse?.name || ""}
+              onChange={handleCourseNameChange}
+              className="mb-2" 
+              placeholder="Course Name"
           />
           
           <FormControl 
-            as="textarea"
-            rows={3}
-            className="mb-3"
-            placeholder="Course Description"
-            value={course?.description || ""}
-            onChange={(e) => setCourse && setCourse({...course, description: e.target.value})}
+              as="textarea"
+              rows={3}
+              value={selectedCourse?.description || ""}
+              onChange={handleCourseDescriptionChange}
+              placeholder="Course Description"
           />
           <hr />
         </>
       )}
       
       <h2 id="wd-dashboard-published">
-        Published Courses ({isEnrollmentView ? courses.length : enrolledCoursesCount})
+        Published Courses ({enrolledCoursesCount})
       </h2> <hr />
-      
-      {isLoading && <div className="text-center my-3">Loading courses...</div>}
-      
       <div id="wd-dashboard-courses">
-        <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-          {filteredCourses.map((c) => (
-            <Col key={c._id} className="wd-dashboard-course" style={{ width: "320px" }}>
-              <Card>
-                <div 
-                  className="wd-dashboard-course-link text-decoration-none text-dark"
-                  style={{ cursor: "pointer" }}
-                  onClick={() => handleCourseAccess(c._id)}
-                >
-                  <Card.Img 
-                    variant="top" 
-                    src={c.image || "/images/reactjs.jpg"} 
-                    width="100%" 
-                    height={200}
-                    alt={`${c.name} image`}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.onerror = null;
-                      target.src = "/images/reactjs.jpg";
-                    }}
-                  />
-                  <Card.Body className="card-body">
-                    <Card.Title className="wd-dashboard-course-title text-nowrap overflow-hidden">
-                      {c.name}
-                    </Card.Title>
-                    <Card.Text className="wd-dashboard-course-description overflow-hidden" style={{ height: "50px" }}>
-                      {c.description}
-                    </Card.Text>
-                  </Card.Body>
-                </div>
-                
-                <div className="p-2">
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                    <Button 
-                      variant="primary" 
-                      onClick={() => handleCourseAccess(c._id)}
-                      disabled={isLoading}
-                    >
-                      Go
-                    </Button>
-                    
-                    {/* Show Enroll/Unenroll only in enrollment view */}
-                    {isEnrollmentView && (
-                      isEnrolled(c._id) ? (
-                        <Button 
-                          variant="danger" 
-                          onClick={() => handleUnenroll(c._id)}
-                          disabled={isLoading}
-                        >
-                          Unenroll
-                        </Button>
-                      ) : (
-                        <Button 
-                          variant="success" 
-                          onClick={() => handleEnroll(c._id)}
-                          disabled={isLoading}
-                        >
-                          Enroll
-                        </Button>
-                      )
-                    )}
-                    
-                    {/* Edit and Delete buttons always show for faculty */}
-                    {isFaculty && (
-                      <>
-                        <Button 
-                          variant="warning" 
-                          onClick={() => setCourse && setCourse(c)}
-                          disabled={isLoading}
-                        >
-                          Edit
-                        </Button>
-                        <Button 
-                          variant="danger" 
-                          onClick={() => deleteCourse && deleteCourse(c._id)}
-                          disabled={isLoading}
-                        >
-                          Delete
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
+          <Row xs={1} sm={2} md={3} lg={4} className="g-4">
+              {filteredCourses.map((c: Course) => {
+                  const isEnrolled = enrollments.some(
+                      (enrollment: any) =>
+                          enrollment.user === currentUser?._id &&
+                          enrollment.course === c._id
+                  );
+                  
+                  return (
+                      <Col key={c._id} className="wd-dashboard-course" style={{ width: "320px" }}>
+                          <Card>
+                              <Link to="#"
+                                  className="wd-dashboard-course-link text-decoration-none text-dark"
+                                  onClick={(e) => {
+                                      e.preventDefault();
+                                      handleGoToCourse(c._id, isEnrolled);
+                                  }}>
+                                  <Card.Img 
+                                      variant="top" 
+                                      src={c.image || "/images/reactjs.jpg"} 
+                                      width="100%" 
+                                      height={200}
+                                      alt={`${c.name} image`}
+                                      onError={(e) => {
+                                          const target = e.target as HTMLImageElement;
+                                          target.onerror = null;
+                                          target.src = "/images/reactjs.jpg";
+                                      }}
+                                  />
+                                  <Card.Body className="card-body">
+                                      <Card.Title className="wd-dashboard-course-title text-nowrap overflow-hidden">
+                                          {c.name}
+                                      </Card.Title>
+                                      <Card.Text className="wd-dashboard-course-description overflow-hidden" style={{ height: "50px" }}>
+                                          {c.description}
+                                      </Card.Text>
+                                  </Card.Body>
+                              </Link>
+                              
+                              <div className="p-2">
+                                  {isEnrollmentView ? (
+                                      
+                                      <div style={{ display: "flex", gap: "5px" }}>
+                                          <Button 
+                                              variant="primary" 
+                                              onClick={() => handleGoToCourse(c._id, isEnrolled)}
+                                          >
+                                              Go
+                                          </Button>
+                                          
+                                          {isEnrolled ? (
+                                              <Button 
+                                                  variant="danger"
+                                                  onClick={() => handleUnenroll(c._id)}
+                                              >
+                                                  Unenroll
+                                              </Button>
+                                          ) : (
+                                              <Button 
+                                                  variant="success"
+                                                  onClick={() => handleEnroll(c._id)}
+                                              >
+                                                  Enroll
+                                              </Button>
+                                          )}
+                                          
+                                          {isFaculty && (
+                                              <>
+                                                  <Button 
+                                                      id="wd-edit-course-click"
+                                                      className="btn btn-warning"
+                                                      onClick={() => handleSetCourse(c)}
+                                                  >
+                                                      Edit
+                                                  </Button>
+                                                  <Button 
+                                                      variant="danger"
+                                                      onClick={() => handleDeleteClick(c._id)}
+                                                      id="wd-delete-course-click"
+                                                  >
+                                                      Delete
+                                                  </Button>
+                                              </>
+                                          )}
+                                      </div>
+                                  ) : (
+                                     
+                                      <div style={{ display: "flex" }}>
+                                          <Button 
+                                              variant="primary" 
+                                              onClick={() => handleGoToCourse(c._id, isEnrolled)}
+                                              className="me-2"
+                                          >
+                                              Go
+                                          </Button>
+                                          
+                                          {isFaculty && (
+                                              <div style={{ display: "flex" }}>
+                                                  <Button 
+                                                      id="wd-edit-course-click"
+                                                      className="btn btn-warning me-2"
+                                                      onClick={() => handleSetCourse(c)}
+                                                  >
+                                                      Edit
+                                                  </Button>
+                                                  <Button 
+                                                      variant="danger"
+                                                      onClick={() => handleDeleteClick(c._id)}
+                                                      id="wd-delete-course-click"
+                                                  >
+                                                      Delete
+                                                  </Button>
+                                              </div>
+                                          )}
+                                      </div>
+                                  )}
+                              </div>
+                          </Card>
+                      </Col>
+                  );
+              })}
+          </Row>
       </div>
       
-      {/* Enrollment required modal */}
-      <Modal 
-        show={showEnrollmentModal} 
-        onHide={() => setShowEnrollmentModal(false)}
-        centered
-      >
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Enrollment Required</Modal.Title>
+          <Modal.Title>Confirm Deletion</Modal.Title>
         </Modal.Header>
-        <Modal.Body>You must be enrolled in this course to access it.</Modal.Body>
+        <Modal.Body>
+          Are you sure you want to delete this course? This action cannot be undone.
+        </Modal.Body>
         <Modal.Footer>
-          <Button variant="primary" onClick={() => setShowEnrollmentModal(false)}>
+          <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={handleDeleteConfirm}>
+            Delete
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      
+      <Modal show={showAccessModal} onHide={() => setShowAccessModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Access Denied</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          You have to enroll in the course to access it.
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => setShowAccessModal(false)}>
             OK
           </Button>
         </Modal.Footer>
