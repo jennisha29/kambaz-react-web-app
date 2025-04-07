@@ -33,7 +33,7 @@ export default function Dashboard() {
       
       try {
         setLoading(true);
-        const userCourses = await userClient.findMyCourses();
+        await userClient.findMyCourses();
         const allCourses = await coursesClient.fetchAllCourses();
         
         const userEnrollments = await enrollmentClient.findEnrollmentsForUser(currentUser._id);
@@ -118,7 +118,7 @@ export default function Dashboard() {
   
   const handleEnroll = async (courseId: string) => {
     try {
-      const enrollment = await enrollmentClient.enrollUserInCourse(currentUser._id, courseId);
+      await enrollmentClient.enrollUserInCourse(currentUser._id, courseId);
       dispatch({ type: "enrollment/addEnrollment", payload: { user: currentUser._id, course: courseId } });
     } catch (error) {
       console.error("Error enrolling in course:", error);
