@@ -20,7 +20,7 @@ const enrollmentSlice = createSlice({
   name: "enrollment",
   initialState,
   reducers: {
-    // ✅ Fix here: accept payload from backend
+    
     getEnrollments: (state, action: PayloadAction<Enrollment[]>) => {
       state.enrollments = action.payload;
     },
