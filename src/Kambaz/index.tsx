@@ -7,7 +7,7 @@ import Dashboard from "./Dashboard";
 import KambazNavigation from "./Navigation";
 import Courses from "./Courses";
 import ProtectedRoute from "./Account/ProtectedRoute";
-import Enrollments from "./Courses/Enrollment";
+import Enrollments from "./Courses/Enrollment/index";
 import Session from "./Account/Session";
 import * as courseClient from "./Courses/client";
 import * as userClient from "./Account/client";
@@ -21,7 +21,6 @@ export default function Kambaz() {
   });
   const { currentUser } = useSelector((state: any) => state.accountReducer);
 
-  // Add new course
   const addNewCourse = async () => {
     try {
       const newCourse = await userClient.createCourse(course);
@@ -82,11 +81,7 @@ export default function Kambaz() {
           <Routes>
             <Route path="/" element={<Navigate to="Account" />} />
             <Route path="/Account/*" element={<Account />} />
-            {/* <Route path="/Dashboard" element={
-              <ProtectedRoute>
-                <Dashboard courses={courses} />
-              </ProtectedRoute>
-            } /> */}
+
             <Route path="/Dashboard" element={
               <ProtectedRoute>
                 {React.createElement(Dashboard, { 
@@ -99,11 +94,6 @@ export default function Kambaz() {
                 })}
               </ProtectedRoute>
             } />
-            {/* <Route path="/Courses/:cid/*" element={
-              <ProtectedRoute requiresEnrollment={true}>
-                <Courses courses={courses} />
-              </ProtectedRoute>
-            } /> */}
             <Route path="/Courses/:cid/*" element={
               <ProtectedRoute requiresEnrollment={true}>
                 {React.createElement(Courses, { courses })}
