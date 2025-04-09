@@ -64,8 +64,10 @@ export default function Dashboard() {
             enrollment.course === course._id
         )
       );
-
-  const enrolledCoursesCount = filteredCourses.length;
+  
+  const enrolledCoursesCount = isEnrollmentView
+     ? courses.length
+     : filteredCourses.length;
 
   const handleAddCourse = async () => {
     try {
@@ -213,7 +215,7 @@ export default function Dashboard() {
         </>
       )}
 
-      <h2 id="wd-dashboard-published">Published Courses ({enrolledCoursesCount})</h2>
+      <h2 id="wd-dashboard-published"> {isEnrollmentView ? "All Courses" : "Published Courses"} ({enrolledCoursesCount}) </h2>
       <hr />
       <div id="wd-dashboard-courses">
         <Row xs={1} sm={2} md={3} lg={4} className="g-4">
