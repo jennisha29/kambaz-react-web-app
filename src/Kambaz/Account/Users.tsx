@@ -1,4 +1,3 @@
-// src/Kambaz/Account/Users.tsx
 import { useState, useEffect } from "react";
 import { useParams } from "react-router";
 import { FormControl } from "react-bootstrap";
@@ -11,6 +10,11 @@ export default function Users() {
   const [role, setRole] = useState("");
   const [name, setName] = useState("");
   const { uid } = useParams();
+
+  useEffect(() => {
+    console.log("Current search:", name);
+  }, [name]);
+  
   
   const filterUsersByRole = async (role: string) => {
     setRole(role);
