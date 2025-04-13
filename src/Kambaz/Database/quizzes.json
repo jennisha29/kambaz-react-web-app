@@ -1,0 +1,739 @@
+[
+  {
+    "_id": "q1_1234",
+    "title": "Q1 - HTML",
+    "course": "1234",
+    "description": "Assessment on HTML fundamentals",
+    "status": "Closed",
+    "dueDate": "2023-09-21T13:00:00",
+    "availableDate": "2023-09-14T09:00:00",
+    "availableUntil": "2023-09-21T13:00:00",
+    "points": 29,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q1_1234_q1",
+        "text": "What does HTML stand for?",
+        "type": "multiple-choice",
+        "points": 3,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "Hyper Text Markup Language",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "Hyper Transfer Markup Language",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "Hyperlink Text Management Language",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "Home Tool Markup Language",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "_id": "q1_1234_q2",
+        "text": "Which HTML tag is used to define an internal style sheet?",
+        "type": "multiple-choice",
+        "points": 3,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "<style>",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "<script>",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "<css>",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "<link>",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "q2_1234",
+    "title": "Q2 - CSS",
+    "course": "1234",
+    "description": "Assessment on CSS properties and selectors",
+    "status": "Closed",
+    "dueDate": "2023-10-05T13:00:00",
+    "availableDate": "2023-09-28T09:00:00",
+    "availableUntil": "2023-10-05T13:00:00",
+    "points": 32,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q2_1234_q1",
+        "text": "Which CSS property changes the text color?",
+        "type": "multiple-choice",
+        "points": 4,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "color",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "text-color",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "font-color",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "background-color",
+            "isCorrect": false
+          }
+        ]
+      },
+      {
+        "_id": "q2_1234_q2",
+        "text": "What is the correct CSS syntax for making all the <p> elements bold?",
+        "type": "multiple-choice",
+        "points": 4,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "p {font-weight: bold;}",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "p {text-size: bold;}",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "<p style='text-size: bold;'>",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "p {font: bold;}",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "exam1_1234",
+    "title": "EXAM 1 FA 23",
+    "course": "1234",
+    "description": "Midterm exam covering HTML, CSS and basic JavaScript",
+    "status": "Closed",
+    "dueDate": "2023-10-26T17:30:00",
+    "availableDate": "2023-10-26T15:30:00",
+    "availableUntil": "2023-10-26T17:30:00",
+    "points": 113,
+    "published": true,
+    "questions": [
+      {
+        "_id": "exam1_1234_q1",
+        "text": "What is the correct HTML for inserting an image?",
+        "type": "multiple-choice",
+        "points": 5,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "<img src='image.jpg' alt='MyImage'>",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "<image src='image.jpg' alt='MyImage'>",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "<img href='image.jpg' alt='MyImage'>",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "<img name='image.jpg' alt='MyImage'>",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "q3_js_1234",
+    "title": "Q3 - JS, ES6",
+    "course": "1234",
+    "description": "Assessment on JavaScript and ES6 features",
+    "status": "Available",
+    "dueDate": "2023-11-15T23:59:00",
+    "availableDate": "2023-11-01T09:00:00",
+    "availableUntil": "2023-11-15T23:59:00",
+    "points": 38,
+    "published": true,
+    "multipleDates": true,
+    "questions": [
+      {
+        "_id": "q3_js_1234_q1",
+        "text": "What is the correct JavaScript syntax to change the content of the HTML element? <p id='demo'>This is a demonstration.</p>",
+        "type": "multiple-choice",
+        "points": 3,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "document.getElementById('demo').innerHTML = 'Hello World!';",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "document.getElement('p').innerHTML = 'Hello World!';",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "#demo.innerHTML = 'Hello World!';",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "document.getElementByName('p').innerHTML = 'Hello World!';",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "q3_1234",
+    "title": "Q3",
+    "course": "1234",
+    "description": "Additional JavaScript assessment",
+    "status": "Available",
+    "dueDate": "2023-11-22T23:59:00",
+    "availableDate": "2023-11-08T09:00:00",
+    "availableUntil": "2023-11-22T23:59:00",
+    "points": 31,
+    "published": true,
+    "multipleDates": true,
+    "questions": [
+      {
+        "_id": "q3_1234_q1",
+        "text": "Inside which HTML element do we put the JavaScript?",
+        "type": "multiple-choice",
+        "points": 4,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "<script>",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "<javascript>",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "<js>",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "<scripting>",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "q4_1234",
+    "title": "Q4 - NODE",
+    "course": "1234",
+    "description": "Assessment on Node.js basics",
+    "status": "Closed",
+    "dueDate": "2023-11-20T15:00:00",
+    "availableDate": "2023-11-13T09:00:00",
+    "availableUntil": "2023-11-20T15:00:00",
+    "points": 25,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q4_1234_q1",
+        "text": "What is Node.js?",
+        "type": "multiple-choice",
+        "points": 5,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "A JavaScript runtime built on Chrome's V8 JavaScript engine",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "A JavaScript library for building user interfaces",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "A server-side programming language",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "A database management system",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "q5_1234",
+    "title": "Q5 - MONGO",
+    "course": "1234",
+    "description": "Assessment on MongoDB database operations",
+    "status": "Not available",
+    "dueDate": "2023-11-30T13:00:00",
+    "availableDate": "2023-11-30T11:40:00",
+    "availableUntil": "2023-11-30T13:00:00",
+    "points": 38,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q5_1234_q1",
+        "text": "What is MongoDB?",
+        "type": "multiple-choice",
+        "points": 4,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "A NoSQL database",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "A relational database",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "A programming language",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "A web server",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "exam2_1234",
+    "title": "EXAM 2 FA23",
+    "course": "1234",
+    "description": "Final exam covering all course material",
+    "status": "Not available",
+    "dueDate": "2023-12-15T13:00:00",
+    "availableDate": "2023-12-15T10:30:00",
+    "availableUntil": "2023-12-15T13:00:00",
+    "points": 104,
+    "published": true,
+    "questions": [
+      {
+        "_id": "exam2_1234_q1",
+        "text": "Which of the following is a full-stack JavaScript framework?",
+        "type": "multiple-choice",
+        "points": 5,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "MEAN stack",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "Ruby on Rails",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "Django",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "Flask",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  
+  {
+    "_id": "q1_5520",
+    "title": "Q1 - iOS Basics",
+    "course": "5520",
+    "description": "Assessment on iOS development fundamentals",
+    "status": "Closed",
+    "dueDate": "2023-09-18T13:00:00",
+    "availableDate": "2023-09-11T09:00:00",
+    "availableUntil": "2023-09-18T13:00:00",
+    "points": 30,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q1_5520_q1",
+        "text": "Which programming language is primarily used for iOS development?",
+        "type": "multiple-choice",
+        "points": 3,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "Swift",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "Java",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "C#",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "Python",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "q2_5520",
+    "title": "Q2 - Android Fundamentals",
+    "course": "5520",
+    "description": "Assessment on Android development basics",
+    "status": "Closed",
+    "dueDate": "2023-10-09T13:00:00",
+    "availableDate": "2023-10-02T09:00:00",
+    "availableUntil": "2023-10-09T13:00:00",
+    "points": 35,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q2_5520_q1",
+        "text": "Which file format is used for Android app packages?",
+        "type": "multiple-choice",
+        "points": 5,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "APK",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "IPA",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "EXE",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "APP",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  
+  {
+    "_id": "q1_6140",
+    "title": "Q1 - ML Algorithms",
+    "course": "6140",
+    "description": "Assessment on machine learning algorithms",
+    "status": "Closed",
+    "dueDate": "2023-09-25T13:00:00",
+    "availableDate": "2023-09-18T09:00:00",
+    "availableUntil": "2023-09-25T13:00:00",
+    "points": 40,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q1_6140_q1",
+        "text": "Which of the following is a supervised learning algorithm?",
+        "type": "multiple-choice",
+        "points": 5,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "Linear Regression",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "K-means clustering",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "Principal Component Analysis",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "Autoencoders",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  
+  {
+    "_id": "q1_6620",
+    "title": "Q1 - Cloud Services",
+    "course": "6620",
+    "description": "Assessment on cloud computing services",
+    "status": "Closed",
+    "dueDate": "2023-09-22T13:00:00",
+    "availableDate": "2023-09-15T09:00:00",
+    "availableUntil": "2023-09-22T13:00:00",
+    "points": 35,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q1_6620_q1",
+        "text": "Which AWS service is used for serverless computing?",
+        "type": "multiple-choice",
+        "points": 5,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "AWS Lambda",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "Amazon EC2",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "Amazon RDS",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "Amazon S3",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  
+  {
+    "_id": "q1_5100",
+    "title": "Q1 - AI Fundamentals",
+    "course": "5100",
+    "description": "Assessment on artificial intelligence basics",
+    "status": "Closed",
+    "dueDate": "2023-09-20T13:00:00",
+    "availableDate": "2023-09-13T09:00:00",
+    "availableUntil": "2023-09-20T13:00:00",
+    "points": 30,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q1_5100_q1",
+        "text": "Which of these is NOT a branch of AI?",
+        "type": "multiple-choice",
+        "points": 3,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "Dynamic programming",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "Machine learning",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "Computer vision",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "Natural language processing",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  
+  {
+    "_id": "q1_5200",
+    "title": "Q1 - SQL Basics",
+    "course": "5200",
+    "description": "Assessment on SQL query fundamentals",
+    "status": "Closed",
+    "dueDate": "2023-09-19T13:00:00",
+    "availableDate": "2023-09-12T09:00:00",
+    "availableUntil": "2023-09-19T13:00:00",
+    "points": 35,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q1_5200_q1",
+        "text": "Which SQL keyword is used to retrieve data from a database?",
+        "type": "multiple-choice",
+        "points": 5,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "SELECT",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "EXTRACT",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "GET",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "OPEN",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  
+  {
+    "_id": "q1_6120",
+    "title": "Q1 - NLP Concepts",
+    "course": "6120",
+    "description": "Assessment on natural language processing concepts",
+    "status": "Closed",
+    "dueDate": "2023-09-15T13:00:00",
+    "availableDate": "2023-09-08T09:00:00",
+    "availableUntil": "2023-09-15T13:00:00",
+    "points": 30,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q1_6120_q1",
+        "text": "Which technique is used to convert words to vectors in NLP?",
+        "type": "multiple-choice",
+        "points": 3,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "Word Embeddings",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "Tokenization",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "Stemming",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "Part-of-speech tagging",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  },
+  
+  {
+    "_id": "q1_6650",
+    "title": "Q1 - Distributed Systems",
+    "course": "6650",
+    "description": "Assessment on distributed systems concepts",
+    "status": "Closed",
+    "dueDate": "2023-09-28T13:00:00",
+    "availableDate": "2023-09-21T09:00:00",
+    "availableUntil": "2023-09-28T13:00:00",
+    "points": 40,
+    "published": true,
+    "questions": [
+      {
+        "_id": "q1_6650_q1",
+        "text": "Which of these is a challenge in distributed systems?",
+        "type": "multiple-choice",
+        "points": 4,
+        "options": [
+          {
+            "id": "opt1",
+            "text": "Network Latency",
+            "isCorrect": true
+          },
+          {
+            "id": "opt2",
+            "text": "Memory Management",
+            "isCorrect": false
+          },
+          {
+            "id": "opt3",
+            "text": "Process Scheduling",
+            "isCorrect": false
+          },
+          {
+            "id": "opt4",
+            "text": "File Permissions",
+            "isCorrect": false
+          }
+        ]
+      }
+    ]
+  }
+]
