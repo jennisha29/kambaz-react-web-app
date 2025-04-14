@@ -55,19 +55,7 @@ export default function Dashboard() {
     fetchData();
   }, [currentUser, dispatch]);
 
-  const filteredCourses = isEnrollmentView
-    ? courses
-    : courses.filter((course: any) =>
-        enrollments.some(
-          (enrollment: any) =>
-            enrollment.user === currentUser?._id &&
-            enrollment.course === course._id
-        )
-      );
-  
-  const enrolledCoursesCount = isEnrollmentView
-     ? courses.length
-     : filteredCourses.length;
+  const coursesCount = courses.length;
 
   const handleAddCourse = async () => {
     try {
@@ -215,11 +203,13 @@ export default function Dashboard() {
         </>
       )}
 
-      <h2 id="wd-dashboard-published"> {isEnrollmentView ? "All Courses" : "Published Courses"} ({enrolledCoursesCount}) </h2>
+      <h2 id="wd-dashboard-published">
+        {isEnrollmentView ? "All Courses" : "Published Courses"} ({coursesCount})
+      </h2>
       <hr />
       <div id="wd-dashboard-courses">
         <Row xs={1} sm={2} md={3} lg={4} className="g-4">
-          {filteredCourses.map((c: any) => {
+          {courses.map((c: any) => {
             const isEnrolled = enrollments.some(
               (enrollment: any) =>
                 enrollment.user === currentUser?._id &&

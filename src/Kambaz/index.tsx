@@ -12,6 +12,7 @@ import * as courseClient from "./Courses/client";
 import * as userClient from "./Account/client";
 import "./styles.css";
 
+
 // Quizzes screens
 import Quizzes from "./Courses/Quizzes/QuizList";
 import QuizEditor from "./Courses/Quizzes/Editor";
@@ -29,7 +30,8 @@ export default function Kambaz() {
 
   const addNewCourse = async () => {
     try {
-      const newCourse = await userClient.createCourse(course);
+      // const newCourse = await userClient.createCourse(course);
+      const newCourse = await courseClient.createCourse(course);
       setCourses([...courses, newCourse]);
     } catch (error) {
       console.error("Error creating course:", error);
@@ -38,7 +40,7 @@ export default function Kambaz() {
 
   const deleteCourse = async (courseId: string) => {
     try {
-      await courseClient.deleteCourse(courseId);
+      const status = await courseClient.deleteCourse(courseId);
       setCourses(courses.filter((course) => course._id !== courseId));
     } catch (error) {
       console.error("Error deleting course:", error);
@@ -65,7 +67,7 @@ export default function Kambaz() {
   const fetchCourses = async () => {
     try {
       if (currentUser) {
-        const courses = await userClient.findMyCourses();
+        const courses = await courseClient.fetchAllCourses();
         setCourses(courses);
       } else {
         setCourses([]);

@@ -9,6 +9,7 @@ import { setModules, addModule, editModule, updateModule, deleteModule } from ".
 import { useSelector, useDispatch } from "react-redux";
 import * as coursesClient from "../client";
 import * as modulesClient from "./client";
+import * as courseClient from "../client";
 
 
 interface Lesson {
@@ -50,14 +51,24 @@ export default function Modules() {
       };
     
     
-    const fetchModules = async () => {
-        const modules = await coursesClient.findModulesForCourse(cid as string);
-        dispatch(setModules(modules));
-    };
+    // const fetchModules = async () => {
+    //     const modules = await coursesClient.findModulesForCourse(cid as string);
+    //     dispatch(setModules(modules));
+    // };
     
-    useEffect(() => {
-        fetchModules();
-    }, []);
+    // useEffect(() => {
+    //     fetchModules();
+    // }, []);
+    
+
+    const fetchModulesForCourse = async () => {
+        const modules = await courseClient.findModulesForCourse(cid!);
+        dispatch(setModules(modules));
+      };
+      useEffect(() => {
+        fetchModulesForCourse();
+      }, [cid]);
+     
     
     return (
         <div>
