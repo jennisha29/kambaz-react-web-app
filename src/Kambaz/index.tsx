@@ -9,7 +9,7 @@ import ProtectedRoute from "./Account/ProtectedRoute";
 import Enrollments from "./Courses/Enrollment/index";
 import Session from "./Account/Session";
 import * as courseClient from "./Courses/client";
-import * as userClient from "./Account/client";
+//import * as userClient from "./Account/client";
 import "./styles.css";
 
 
@@ -40,7 +40,7 @@ export default function Kambaz() {
 
   const deleteCourse = async (courseId: string) => {
     try {
-      const status = await courseClient.deleteCourse(courseId);
+      await courseClient.deleteCourse(courseId);
       setCourses(courses.filter((course) => course._id !== courseId));
     } catch (error) {
       console.error("Error deleting course:", error);
