@@ -5,18 +5,6 @@ import { useSelector, useDispatch } from "react-redux";
 import { addAssignment, updateAssignment } from "./reducer";
 import * as client from "./client";
 
-// interface Assignment {
-//   _id: string;
-//   title: string;
-//   description: string;
-//   points: number;
-//   dueDate: string;
-//   availableFromDate: string;
-//   availableUntilDate?: string;
-//   course: string;
-//   module?: string;
-// }
-
 export default function Editor() {
   const { aid, cid } = useParams();
   
@@ -54,7 +42,7 @@ export default function Editor() {
     fileUploads: false
   });
   
-  // Fetch assignment data when editing
+  // Fetch assignment data when editing using MongoDB-connected client
   useEffect(() => {
     const fetchAssignment = async () => {
       if (!isNewAssignment && aid) {
@@ -67,7 +55,7 @@ export default function Editor() {
             setAssignment({
               ...fetchedAssignment,
               dueDate: formatDateForInput(fetchedAssignment.dueDate),
-              availableFromDate: formatDateForInput(fetchedAssignment.availableFromDate),
+              availableFromDate: formatDateForInput(fetchedAssignment.availableFromDate || fetchedAssignment.dueDate),
               availableUntilDate: fetchedAssignment.availableUntilDate ? 
                 formatDateForInput(fetchedAssignment.availableUntilDate) : ""
             });
@@ -83,6 +71,7 @@ export default function Editor() {
   
   const formatDateForInput = (dateString: string): string => {
     try {
+      if (!dateString) return new Date().toISOString().split('T')[0];
       return dateString.split('T')[0];
     } catch (e) {
       console.error("Error formatting date:", e);
@@ -106,12 +95,12 @@ export default function Editor() {
     
     try {
       if (isNewAssignment) {
-        // Create new assignment on server
+        // Create new assignment on server with MongoDB
         const newAssignment = await client.createAssignment(cid as string, formattedAssignment);
         console.log("New assignment created on server:", newAssignment);
         dispatch(addAssignment(newAssignment));
       } else {
-        // Update existing assignment on server
+        // Update existing assignment on server with MongoDB
         const updatedAssignment = await client.updateAssignment(formattedAssignment);
         console.log("Assignment updated on server:", updatedAssignment);
         dispatch(updateAssignment(updatedAssignment));

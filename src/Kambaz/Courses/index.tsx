@@ -3,13 +3,14 @@ import Modules from "./Modules";
 import Home from "./Home";
 import Assignments from "./Assignments";
 import AssignmentEditor from "./Assignments/Editor";
-import PeopleTable from "./People/Table";
+// import PeopleTable from "./People/Table";
 import { Navigate, Route, Routes, useParams, useLocation } from "react-router";
 import { FaAlignJustify } from "react-icons/fa";
 import { useSelector } from "react-redux";
 import Quizzes from "./Quizzes/QuizList";
 import QuizEditor from "./Quizzes/Editor";
 import QuizTaker from "./Quizzes/Taker";
+import People from "./People";
 
 export default function Courses() {
   const { cid } = useParams();
@@ -45,7 +46,8 @@ export default function Courses() {
                 <Route path="Quizzes/:qid/Edit" element={<QuizEditor />} />
                 <Route path="Quizzes/:qid/Take" element={<QuizTaker />} />
                 <Route path="Grades" element={<h2>Grades</h2>} />
-                <Route path="People" element={<PeopleTable />} />
+                {/* <Route path="People" element={<PeopleTable />} /> */}
+                <Route path="People" element={<People />} />
             </Routes>
         </div>
       </div>

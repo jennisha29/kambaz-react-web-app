@@ -9,9 +9,8 @@ import ProtectedRoute from "./Account/ProtectedRoute";
 import Enrollments from "./Courses/Enrollment/index";
 import Session from "./Account/Session";
 import * as courseClient from "./Courses/client";
-//import * as userClient from "./Account/client";
+import * as userClient from "./Account/client";
 import "./styles.css";
-
 
 // Quizzes screens
 import Quizzes from "./Courses/Quizzes/QuizList";
@@ -25,12 +24,92 @@ export default function Kambaz() {
     name: "New Course",
     description: "New Description"
   });
+  const [enrolling, setEnrolling] = useState<boolean>(false);
 
   const { currentUser } = useSelector((state: any) => state.accountReducer);
 
+  const findCoursesForUser = async () => {
+    try {
+      if (!currentUser) return;
+      const courses = await userClient.findCoursesForUser(currentUser._id);
+      setCourses(courses);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // const fetchCourses = async () => {
+  //   try {
+  //     if (!currentUser) return;
+  //     const allCourses = await courseClient.fetchAllCourses();
+  //     const enrolledCourses = await userClient.findCoursesForUser(
+  //       currentUser._id
+  //     );
+  //     const courses = allCourses.map((course: any) => {
+  //       if (enrolledCourses.find((c: any) => c._id === course._id)) {
+  //         return { ...course, enrolled: true };
+  //       } else {
+  //         return course;
+  //       }
+  //     });
+  //     setCourses(courses);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
+  const fetchCourses = async () => {
+    try {
+      if (!currentUser) return;
+      const allCourses = await courseClient.fetchAllCourses();
+      const enrolledCourses = await userClient.findCoursesForUser(
+        currentUser._id
+      );
+      
+      // Guard against null/undefined
+      const coursesWithEnrollmentInfo = allCourses.map((course: any) => {
+        if (Array.isArray(enrolledCourses) && 
+            enrolledCourses.some((c: any) => c && c._id === course._id)) {
+          return { ...course, enrolled: true };
+        } else {
+          return course;
+        }
+      });
+      
+      setCourses(coursesWithEnrollmentInfo);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      // Fallback to empty array on error
+      setCourses([]);
+    }
+  };
+
+  const updateEnrollment = async (courseId: string, enrolled: boolean) => {
+    try{
+    console.log(`Attempting to ${enrolled ? 'enroll in' : 'unenroll from'} course ${courseId}`);
+    if (enrolled) {
+      await userClient.enrollIntoCourse(currentUser._id, courseId);
+    } else {
+      await userClient.unenrollFromCourse(currentUser._id, courseId);
+    }
+    console.log('API call successful');
+    setCourses(
+      courses.map((course) => {
+        if (course._id === courseId) {
+          return { ...course, enrolled: enrolled };
+        } else {
+          return course;
+        }
+      })
+    );
+  }catch (error) {
+    console.error(`Error ${enrolled ? 'enrolling' : 'unenrolling'}:`, error);
+  }
+  };
+ 
+
   const addNewCourse = async () => {
     try {
-      // const newCourse = await userClient.createCourse(course);
       const newCourse = await courseClient.createCourse(course);
       setCourses([...courses, newCourse]);
     } catch (error) {
@@ -64,22 +143,15 @@ export default function Kambaz() {
     }
   };
 
-  const fetchCourses = async () => {
-    try {
-      if (currentUser) {
-        const courses = await courseClient.fetchAllCourses();
-        setCourses(courses);
-      } else {
-        setCourses([]);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   useEffect(() => {
-    fetchCourses();
-  }, [currentUser]);
+    if (currentUser) {
+      if (enrolling) {
+        fetchCourses();
+      } else {
+        findCoursesForUser();
+      }
+    }
+  }, [currentUser, enrolling]);
 
   return (
     <Session>
@@ -101,7 +173,10 @@ export default function Kambaz() {
                     addNewCourse,
                     deleteCourse,
                     updateCourse,
-                  })}
+                    enrolling,
+                    setEnrolling,
+                    updateEnrollment
+                  })}    
                 </ProtectedRoute>
               }
             />
@@ -115,7 +190,6 @@ export default function Kambaz() {
               }
             />
 
-            {/* ✅ Quizzes Routes */}
             <Route
               path="/Courses/:cid/Quizzes"
               element={

@@ -24,7 +24,7 @@ export default function Assignments() {
     const { currentUser } = useSelector((state: any) => state.accountReducer || {});
     const isFaculty = currentUser && currentUser.role === "FACULTY";
 
-    // Fetch assignments from the server
+    // Fetch assignments from the server using the MongoDB-connected client
     const fetchAssignments = async () => {
         try {
             if (cid) {
@@ -191,7 +191,7 @@ export default function Assignments() {
                                             <span className="text-secondary">
                                                 {assignment.module && " | "}
                                                 <span className="fw-bold text-dark">Available from </span>
-                                                {formatDate(assignment.availableFromDate)} |
+                                                {formatDate(assignment.availableFromDate || assignment.dueDate)} |
                                             </span>
                                             <div className="text-secondary">
                                                 <span className="fw-bold text-dark">Due </span>
