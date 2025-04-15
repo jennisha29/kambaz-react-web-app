@@ -50,16 +50,6 @@ export default function Modules() {
         dispatch(updateModule(module));
     };
 
-    // const updateModuleHandler = async (module: any) => {
-    //     await modulesClient.updateModule(module);
-    //     dispatch(updateModule(module));
-    //   };
-     
-    
-    // const removeModule = async (moduleId: string) => {
-    //     await modulesClient.deleteModule(moduleId);
-    //     dispatch(deleteModule(moduleId));
-    // };
 
     const fetchModulesForCourse = async () => {
         const modules = await courseClient.findModulesForCourse(cid!);

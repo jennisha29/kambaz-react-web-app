@@ -45,19 +45,6 @@ export default function Users() {
     fetchUsers();
   }, [uid]);
   
-//   const createUser = async () => {
-//     const user = await client.createUser({
-//       firstName: "New",
-//       lastName: `User${users.length + 1}`,
-//       username: `newuser${Date.now()}`,
-//       password: "password123",
-//       email: `email${users.length + 1}@neu.edu`,
-//       section: "S101",
-//       role: "STUDENT",
-//     });
-//     setUsers([...users, user]);
-//   };
-
   const createUser = async () => {
     try {
       console.log("Creating new user...");

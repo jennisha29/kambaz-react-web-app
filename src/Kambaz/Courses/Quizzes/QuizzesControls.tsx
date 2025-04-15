@@ -8,7 +8,6 @@ export default function QuizzesControls() {
   const navigate = useNavigate();
   const { cid } = useParams();
   
-  // checking if faculty
   const { currentUser } = useSelector((state: any) => state.accountReducer || {});
   const isFaculty = currentUser && currentUser.role === "FACULTY";
   

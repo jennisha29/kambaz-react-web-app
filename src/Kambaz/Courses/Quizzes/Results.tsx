@@ -13,7 +13,7 @@ import {
 } from 'react-bootstrap';
 import * as quizClient from './client';
 
-// Quiz Results component for faculty to view quiz statistics and student attempts
+
 const QuizResults: React.FC = () => {
   const { cid, qid } = useParams<{ cid: string; qid: string }>();
   const navigate = useNavigate();
@@ -31,11 +31,11 @@ const QuizResults: React.FC = () => {
         setLoading(true);
         setError('');
         
-        // Fetch quiz details
+   
         const quizData = await quizClient.fetchQuiz(qid);
         setQuiz(quizData);
         
-        // Fetch quiz attempts
+        
         const attemptsData = await quizClient.fetchQuizAttempts(qid);
         setAttempts(attemptsData);
         
@@ -50,13 +50,13 @@ const QuizResults: React.FC = () => {
     fetchData();
   }, [qid]);
   
-  // Format date for display
+
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
   
-  // Calculate statistics
+
   const calculateStats = () => {
     if (!attempts || attempts.length === 0) {
       return {
@@ -70,20 +70,18 @@ const QuizResults: React.FC = () => {
     
     const scores = attempts.map(a => a.score);
     
-    // Sort scores for median calculation
     const sortedScores = [...scores].sort((a, b) => a - b);
     
     const avg = scores.reduce((sum, score) => sum + score, 0) / scores.length;
     const highest = Math.max(...scores);
     const lowest = Math.min(...scores);
     
-    // Calculate median
+ 
     const mid = Math.floor(sortedScores.length / 2);
     const median = sortedScores.length % 2 === 0
       ? (sortedScores[mid - 1] + sortedScores[mid]) / 2
       : sortedScores[mid];
     
-    // Calculate pass rate (score >= 70%)
     const passCount = scores.filter(score => score >= 70).length;
     const passRate = (passCount / scores.length) * 100;
     
@@ -156,7 +154,6 @@ const QuizResults: React.FC = () => {
         </Button>
       </div>
       
-      {/* Quiz statistics cards */}
       <Row className="mb-4">
         <Col md>
           <Card className="mb-3 text-center h-100">
@@ -215,7 +212,7 @@ const QuizResults: React.FC = () => {
         </Col>
       </Row>
       
-      {/* Student attempts table */}
+
       <Card className="mb-4">
         <Card.Header>
           <h4 className="mb-0">Student Attempts</h4>
@@ -269,7 +266,6 @@ const QuizResults: React.FC = () => {
         </Card.Body>
       </Card>
       
-      {/* Question analysis (optional) */}
       <Card>
         <Card.Header>
           <h4 className="mb-0">Question Analysis</h4>
@@ -289,12 +285,12 @@ const QuizResults: React.FC = () => {
               </thead>
               <tbody>
                 {quiz.questions.map((question: any, index: number) => {
-                  // Calculate success rate for this question
+                 
                   const questionSuccessCount = attempts.filter(attempt => {
                     const userAnswer = attempt.answers?.[index];
                     if (!userAnswer) return false;
                     
-                    if (question.type === 'essay') return true; // Skip essay questions
+                    if (question.type === 'essay') return true;
                     
                     const correctOption = question.options.find((opt: any) => opt.isCorrect);
                     return userAnswer === correctOption?.id;

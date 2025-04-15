@@ -17,20 +17,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { enrollments } = useSelector((state: any) => state.enrollmentReducer);
   const { cid } = useParams<{ cid: string }>();
 
-  // Check if user is logged in
   if (!currentUser) {
     return <Navigate to="/Kambaz/Account/Signin" />;
   }
 
-  // Check for required role if specified
+
   if (requiredRole && currentUser.role !== requiredRole) {
-    // Allow ADMIN to access FACULTY routes
+  
     if (!(requiredRole === "FACULTY" && currentUser.role === "ADMIN")) {
       return <Navigate to="/Kambaz/Dashboard" />;
     }
   }
 
-  // Check for enrollment if required
   if (requiresEnrollment && cid) {
     const isEnrolled = enrollments.some(
       (enrollment: any) => 
@@ -38,7 +36,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
         enrollment.course === cid
     );
 
-    // Faculty and Admin can access any course without enrollment
+    
     const isFacultyOrAdmin = currentUser.role === "FACULTY" || currentUser.role === "ADMIN";
 
     if (!isEnrolled && !isFacultyOrAdmin) {

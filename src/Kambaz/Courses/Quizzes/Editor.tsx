@@ -15,7 +15,7 @@ import {
 } from 'react-bootstrap';
 import * as quizClient from './client';
 
-// Quiz Editor component - for faculty to create/edit quizzes
+
 const QuizEditor: React.FC = () => {
   const { cid, qid } = useParams<{ cid: string; qid: string }>();
   const navigate = useNavigate();
@@ -73,7 +73,6 @@ const QuizEditor: React.FC = () => {
     fetchQuiz();
   }, [qid, isNewQuiz]);
   
-  // Calculate total points based on questions
   useEffect(() => {
     if (quiz.questions?.length > 0) {
       const totalPoints = quiz.questions.reduce(
@@ -185,7 +184,6 @@ const QuizEditor: React.FC = () => {
     const updatedQuestions = [...quiz.questions];
     const options = [...updatedQuestions[questionIndex].options];
     
-    // Set all options to incorrect first
     options.forEach((opt, idx) => {
       options[idx] = { ...opt, isCorrect: idx === optionIndex };
     });

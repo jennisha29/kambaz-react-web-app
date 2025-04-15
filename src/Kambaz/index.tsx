@@ -12,7 +12,6 @@ import * as courseClient from "./Courses/client";
 import * as userClient from "./Account/client";
 import "./styles.css";
 
-// Quizzes screens
 import Quizzes from "./Courses/Quizzes/QuizList";
 import QuizEditor from "./Courses/Quizzes/Editor";
 import QuizTaker from "./Courses/Quizzes/Taker";
@@ -32,7 +31,6 @@ export default function Kambaz() {
     try {
       if (!currentUser) return;
       const courses = await userClient.findCoursesForUser(currentUser._id);
-      // Ensure we don't set null/undefined courses and filter out any null items
       setCourses(Array.isArray(courses) ? courses.filter(c => c !== null && c !== undefined) : []);
     } catch (error) {
       console.error(error);
@@ -48,7 +46,6 @@ export default function Kambaz() {
         currentUser._id
       );
       
-      // Guard against null/undefined and filter out null items
       const validCourses = Array.isArray(allCourses) 
         ? allCourses.filter(c => c !== null && c !== undefined)
         : [];
@@ -78,11 +75,9 @@ export default function Kambaz() {
         await userClient.unenrollFromCourse(currentUser._id, courseId);
       }
       console.log('API call successful');
-      
-      // Update the local state immediately for a better UX
+    
       setCourses(prevCourses => 
         prevCourses.map((c) => {
-          // Add null check here
           if (c && c._id === courseId) {
             return { ...c, enrolled: enrolled };
           }
@@ -90,7 +85,6 @@ export default function Kambaz() {
         })
       );
       
-      // Also refresh the course list to ensure we have the latest data
       if (enrolling) {
         await fetchCourses();
       } else {
@@ -105,12 +99,10 @@ export default function Kambaz() {
     try {
       const newCourse = await courseClient.createCourse(course);
       
-      // Add the new course to the list with a null check
       if (newCourse) {
         setCourses(prevCourses => [...prevCourses, newCourse]);
       }
       
-      // Reset the course form
       setCourse({
         name: "New Course",
         description: "New Description"
@@ -124,12 +116,10 @@ export default function Kambaz() {
     try {
       await courseClient.deleteCourse(courseId);
       
-      // Filter out the deleted course with null check
       setCourses(prevCourses => 
         prevCourses.filter((c) => c && c._id !== courseId)
       );
       
-      // If we deleted the currently selected course, reset the form
       if (course && course._id === courseId) {
         setCourse({
           name: "New Course",
@@ -143,7 +133,7 @@ export default function Kambaz() {
 
   const updateCourse = async () => {
     try {
-      // Make sure we have a valid course to update
+
       if (!course || !course._id) {
         console.error("No valid course selected for update");
         return;
@@ -151,7 +141,7 @@ export default function Kambaz() {
       
       await courseClient.updateCourse(course);
       
-      // Update the course in the list with null check
+
       setCourses(prevCourses =>
         prevCourses.map((c) => {
           if (c && c._id === course._id) {
@@ -190,7 +180,7 @@ export default function Kambaz() {
               element={
                 <ProtectedRoute>
                   {React.createElement(Dashboard, {
-                    courses: courses.filter(c => c !== null), // Ensure we don't pass null courses
+                    courses: courses.filter(c => c !== null),
                     course,
                     setCourse,
                     addNewCourse,
@@ -209,7 +199,7 @@ export default function Kambaz() {
               element={
                 <ProtectedRoute requiresEnrollment={true}>
                   {React.createElement(Courses, { 
-                    courses: courses.filter(c => c !== null) // Ensure we don't pass null courses
+                    courses: courses.filter(c => c !== null)
                   })}
                 </ProtectedRoute>
               }

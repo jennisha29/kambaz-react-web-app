@@ -38,16 +38,15 @@ export default function PeopleDetails() {
     navigate(-1);   
   };
 
-  // Handle going back to the users list
   const handleBack = () => {
-    // Reset editing state and navigate back
+    
     setEditing(false);
     navigate("/Kambaz/Account/Users");
   };
       
   useEffect(() => {     
     if (uid) {
-      // Reset editing state when component mounts or uid changes
+  
       setEditing(false);
       fetchUser();
     }

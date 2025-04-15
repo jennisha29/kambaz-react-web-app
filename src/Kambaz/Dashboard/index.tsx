@@ -52,7 +52,6 @@ export default function Dashboard({
         setLoading(true);
         const userEnrollments = await enrollmentClient.findEnrollmentsForUser(currentUser._id);
         
-        // Add type checking before mapping
         if (Array.isArray(userEnrollments)) {
           dispatch(getEnrollments(userEnrollments.map((e: any) => ({
             _id: e._id,
@@ -61,14 +60,12 @@ export default function Dashboard({
           }))));
         } else {
           console.error("Expected array of enrollments but got:", userEnrollments);
-          // Initialize with empty array if not an array
           dispatch(getEnrollments([]));
         }
         setLoading(false);
       } catch (error) {
         console.error("Error fetching data:", error);
         setLoading(false);
-        // Initialize with empty array on error
         dispatch(getEnrollments([]));
       }
     };
@@ -76,7 +73,6 @@ export default function Dashboard({
     fetchData();
   }, [currentUser, dispatch, courses]);
 
-  // FIXED: Calculate coursesCount depending on enrolling state
   const coursesCount = useMemo(() => {
     if (enrolling) {
       return courses?.length || 0;
@@ -314,7 +310,6 @@ export default function Dashboard({
                     <div style={{ display: "flex", gap: "5px" }}>
                       <Button variant="primary" onClick={() => handleGoToCourse(c._id, isEnrolled)}>Go</Button>
                       
-                      {/* Enrollment button moved here */}
                       {enrolling && (
                         <Button 
                           onClick={() => {

@@ -24,7 +24,6 @@ export default function Assignments() {
     const { currentUser } = useSelector((state: any) => state.accountReducer || {});
     const isFaculty = currentUser && currentUser.role === "FACULTY";
 
-    // Fetch assignments from the server using the MongoDB-connected client
     const fetchAssignments = async () => {
         try {
             if (cid) {
@@ -53,14 +52,12 @@ export default function Assignments() {
         }
     }, [location.pathname]);
     
-    // getting assignments from Redux
     const allAssignments = useSelector((state: any) => {
         const reduxAssignments = state?.assignmentsReducer?.assignments || [];
         console.log("All assignments from Redux:", reduxAssignments);
         return reduxAssignments.length > 0 ? reduxAssignments : [];
     });
     
-    // filtering assignments by course ID
     const courseAssignments = useMemo(() => {
         if (!Array.isArray(allAssignments) || !cid) {
             console.log("No assignments array or course ID");
@@ -112,7 +109,7 @@ export default function Assignments() {
                 dispatch(deleteAssignment(assignmentToDelete));
                 setShowDeleteModal(false);
                 setAssignmentToDelete(null);
-                // Refresh assignments from server after delete
+
                 fetchAssignments();
             } catch (error) {
                 console.error("Error deleting assignment:", error);

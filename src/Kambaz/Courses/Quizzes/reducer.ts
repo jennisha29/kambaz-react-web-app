@@ -35,7 +35,7 @@ interface QuizzesState {
 
 const mapToQuizType = (q: any): Quiz => ({
   ...q,
-  courseId: q.course || q.courseId || "",  // ensure courseId exists
+  courseId: q.course || q.courseId || "",
   createdBy: q.createdBy || "system",
   createdAt: q.createdAt || new Date().toISOString(),
 });

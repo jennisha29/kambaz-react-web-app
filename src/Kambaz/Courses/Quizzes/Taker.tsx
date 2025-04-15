@@ -13,12 +13,12 @@ import {
 } from 'react-bootstrap';
 import * as quizClient from './client';
 
-// Quiz Taker component for students to take quizzes or for faculty to preview
+
 const QuizTaker: React.FC = () => {
   const { cid, qid } = useParams<{ cid: string; qid: string }>();
   const navigate = useNavigate();
   
-  // States
+
   const [quiz, setQuiz] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -31,10 +31,10 @@ const QuizTaker: React.FC = () => {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   
-  // Determine if this is preview mode
+ 
   const isPreview = window.location.pathname.includes('/Preview');
   
-  // Fetch quiz on component mount
+
   useEffect(() => {
     const fetchQuiz = async () => {
       if (!qid) return;
@@ -45,7 +45,7 @@ const QuizTaker: React.FC = () => {
         
         const data = await quizClient.fetchQuiz(qid);
         
-        // Check if quiz is available (unless in preview mode)
+      
         if (!isPreview) {
           const now = new Date();
           const availableDate = data.availableDate ? new Date(data.availableDate) : null;
@@ -66,7 +66,7 @@ const QuizTaker: React.FC = () => {
         
         setQuiz(data);
         
-        // Initialize answers array
+    
         if (data.questions && data.questions.length > 0) {
           setAnswers(new Array(data.questions.length).fill(null));
         }
@@ -82,19 +82,19 @@ const QuizTaker: React.FC = () => {
     fetchQuiz();
   }, [qid, isPreview]);
   
-  // Timer for quiz
+
   useEffect(() => {
     if (!quizStarted || !quiz || isPreview || !quiz.timeLimit) return;
     
-    // Set initial time
+
     setTimeLeft(quiz.timeLimit * 60);
     
-    // Start timer
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev === null || prev <= 0) {
           clearInterval(timer);
-          // Auto-submit quiz when time runs out
+      
           handleSubmitQuiz();
           return 0;
         }
@@ -102,7 +102,7 @@ const QuizTaker: React.FC = () => {
       });
     }, 1000);
     
-    // Clean up timer
+
     return () => clearInterval(timer);
   }, [quizStarted, quiz]);
   
@@ -141,7 +141,7 @@ const QuizTaker: React.FC = () => {
   };
   
   const handleFinishClick = () => {
-    // Check if all questions are answered
+
     const unansweredQuestions = answers.filter(a => a === null).length;
     
     if (unansweredQuestions > 0) {
@@ -154,7 +154,7 @@ const QuizTaker: React.FC = () => {
   };
   
   const handleSubmitQuiz = async () => {
-    // In preview mode, just return to quiz list
+
     if (isPreview) {
       navigate(`/Kambaz/Courses/${cid}/Quizzes`);
       return;
@@ -164,20 +164,19 @@ const QuizTaker: React.FC = () => {
       setSubmitting(true);
       setShowSubmitModal(false);
       
-      // Calculate score
+
       let correctCount = 0;
       let totalPoints = 0;
       
       quiz.questions.forEach((question: any, index: number) => {
         const userAnswer = answers[index];
         
-        // Skip essay questions for auto-grading
         if (question.type === 'essay') return;
         
         const questionPoints = parseInt(question.points) || 0;
         totalPoints += questionPoints;
         
-        // Find the correct option
+
         const correctOption = question.options.find((opt: any) => opt.isCorrect);
         
         if (userAnswer === correctOption?.id) {
@@ -188,7 +187,6 @@ const QuizTaker: React.FC = () => {
       const calculatedScore = totalPoints > 0 ? Math.round((correctCount / totalPoints) * 100) : 0;
       setScore(calculatedScore);
       
-      // Submit the attempt to the server
       await quizClient.submitQuizAttempt(qid as string, {
         answers,
         score: calculatedScore,
@@ -240,7 +238,6 @@ const QuizTaker: React.FC = () => {
     );
   }
   
-  // Quiz completion screen
   if (quizCompleted) {
     return (
       <Container className="mt-4">
@@ -275,7 +272,6 @@ const QuizTaker: React.FC = () => {
     );
   }
   
-  // Quiz intro screen
   if (!quizStarted) {
     return (
       <Container className="mt-4">
@@ -350,13 +346,13 @@ const QuizTaker: React.FC = () => {
     );
   }
   
-  // Get current question
+
   const question = quiz.questions[currentQuestion];
   
-  // Quiz taking screen
+
   return (
     <Container className="mt-4">
-      {/* Quiz header info */}
+     
       <div className="d-flex justify-content-between align-items-center mb-3">
         <div>
           <h3>{quiz.title}</h3>
@@ -365,7 +361,7 @@ const QuizTaker: React.FC = () => {
           </p>
         </div>
         
-        {/* Timer */}
+      
         {timeLeft !== null && (
           <div className="text-center">
             <div className={`rounded-circle border border-2 d-flex align-items-center justify-content-center ${timeLeft < 60 ? 'border-danger text-danger' : 'border-primary'}`} style={{ width: '60px', height: '60px' }}>
@@ -376,14 +372,14 @@ const QuizTaker: React.FC = () => {
         )}
       </div>
       
-      {/* Progress bar */}
+      
       <ProgressBar 
         now={(currentQuestion + 1) / quiz.questions.length * 100} 
         label={`Question ${currentQuestion + 1} of ${quiz.questions.length}`}
         className="mb-3"
       />
       
-      {/* Question card */}
+      
       <Card className="shadow mb-4">
         <Card.Header className="d-flex justify-content-between">
           <span>Question {currentQuestion + 1}</span>
@@ -393,7 +389,7 @@ const QuizTaker: React.FC = () => {
         <Card.Body>
           <Card.Title className="mb-4">{question.text}</Card.Title>
           
-          {/* Multiple choice / True-False questions */}
+         
           {(question.type === 'multiple-choice' || question.type === 'true-false') && (
             <Form>
               {question.options.map((option: any) => (
@@ -411,7 +407,7 @@ const QuizTaker: React.FC = () => {
             </Form>
           )}
           
-          {/* Essay questions */}
+          
           {question.type === 'essay' && (
             <Form.Group>
               <Form.Label>Your Answer:</Form.Label>
@@ -427,7 +423,7 @@ const QuizTaker: React.FC = () => {
         </Card.Body>
       </Card>
       
-      {/* Navigation buttons */}
+      
       <div className="d-flex justify-content-between">
         <Button
           variant="outline-secondary"
@@ -455,7 +451,7 @@ const QuizTaker: React.FC = () => {
         )}
       </div>
       
-      {/* Submit confirmation modal */}
+     
       <Modal show={showSubmitModal} onHide={() => setShowSubmitModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Submit Quiz</Modal.Title>

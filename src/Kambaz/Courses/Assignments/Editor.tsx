@@ -12,7 +12,6 @@ export default function Editor() {
   const dispatch = useDispatch();
   const isNewAssignment = !aid || aid === "new";
 
-  // checking user's role
   const { currentUser } = useSelector((state: any) => state?.accountReducer || {});
   const isFaculty = currentUser?.role === "FACULTY";
   
@@ -42,7 +41,6 @@ export default function Editor() {
     fileUploads: false
   });
   
-  // Fetch assignment data when editing using MongoDB-connected client
   useEffect(() => {
     const fetchAssignment = async () => {
       if (!isNewAssignment && aid) {
@@ -95,12 +93,12 @@ export default function Editor() {
     
     try {
       if (isNewAssignment) {
-        // Create new assignment on server with MongoDB
+    
         const newAssignment = await client.createAssignment(cid as string, formattedAssignment);
         console.log("New assignment created on server:", newAssignment);
         dispatch(addAssignment(newAssignment));
       } else {
-        // Update existing assignment on server with MongoDB
+      
         const updatedAssignment = await client.updateAssignment(formattedAssignment);
         console.log("Assignment updated on server:", updatedAssignment);
         dispatch(updateAssignment(updatedAssignment));

@@ -1,13 +1,11 @@
 import axios from "axios";
 
-// Create axios instance with credentials
 const axiosWithCredentials = axios.create({ withCredentials: true });
 
 const REMOTE_SERVER = import.meta.env.VITE_REMOTE_SERVER;
 const ASSIGNMENTS_API = `${REMOTE_SERVER}/api/assignments`;
 const COURSES_API = `${REMOTE_SERVER}/api/courses`;
 
-// Type definition for Assignment
 export interface Assignment {
   _id: string;
   title: string;
