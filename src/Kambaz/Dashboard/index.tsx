@@ -74,7 +74,7 @@ export default function Dashboard({
     };
   
     fetchData();
-  }, [currentUser, dispatch]);
+  }, [currentUser, dispatch, courses]);
 
   // FIXED: Calculate coursesCount depending on enrolling state
   const coursesCount = useMemo(() => {
