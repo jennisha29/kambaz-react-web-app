@@ -76,12 +76,11 @@ export default function Dashboard({
     fetchData();
   }, [currentUser, dispatch]);
 
-  // Count of enrolled courses - only counting enrolled courses when not in enrolling mode
+  // FIXED: Calculate coursesCount depending on enrolling state
   const coursesCount = useMemo(() => {
     if (enrolling) {
       return courses?.length || 0;
     } else {
-      // Count only enrolled courses
       return courses?.filter(c => {
         if (!c) return false;
         return Boolean(
@@ -108,15 +107,13 @@ export default function Dashboard({
   };
 
   const handleCourseNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const updatedCourse = { ...course, name: e.target.value };
-    setCourse(updatedCourse);
-    dispatch(setSelectedCourse(updatedCourse));
+    setCourse({ ...course, name: e.target.value });
+    dispatch(setSelectedCourse({ ...course, name: e.target.value }));
   };
 
   const handleCourseDescriptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const updatedCourse = { ...course, description: e.target.value };
-    setCourse(updatedCourse);
-    dispatch(setSelectedCourse(updatedCourse));
+    setCourse({ ...course, description: e.target.value });
+    dispatch(setSelectedCourse({ ...course, description: e.target.value }));
   };
 
   const handleDeleteClick = (courseId: string) => {
@@ -130,8 +127,6 @@ export default function Dashboard({
       if (!courseToDelete) return;
       
       await deleteCourse(courseToDelete);
-      // The parent component will handle fetching updated courses
-      // We still dispatch to keep Redux in sync
       dispatch(deleteCourseAction(courseToDelete));
 
       setShowDeleteModal(false);
@@ -144,9 +139,7 @@ export default function Dashboard({
   const handleAddCourse = async () => {
     try {
       await addNewCourse();
-      // The parent component will handle fetching updated courses
-      // We still dispatch to keep Redux in sync
-      dispatch(addCourseAction());
+      dispatch(addCourseAction(course));
     } catch (error) {
       console.error("Error adding course:", error);
     }
@@ -155,8 +148,6 @@ export default function Dashboard({
   const handleUpdateCourse = async () => {
     try {
       await updateCourse();
-      // The parent component will handle fetching updated courses
-      // We still dispatch to keep Redux in sync
       dispatch(updateCourseAction());
     } catch (error) {
       console.error("Error updating course:", error);
@@ -327,6 +318,8 @@ export default function Dashboard({
                       {enrolling && (
                         <Button 
                           onClick={() => {
+                            // e.preventDefault();
+                            // e.stopPropagation();
                             console.log(`Button clicked: ${isEnrolled ? 'unenroll' : 'enroll'} for course ${c._id}`);
                             isEnrolled ? handleUnenroll(c._id) : handleEnroll(c._id);
                           }}

@@ -32,31 +32,13 @@ export default function Kambaz() {
     try {
       if (!currentUser) return;
       const courses = await userClient.findCoursesForUser(currentUser._id);
-      setCourses(courses);
+      // Ensure we don't set null/undefined courses and filter out any null items
+      setCourses(Array.isArray(courses) ? courses.filter(c => c !== null && c !== undefined) : []);
     } catch (error) {
       console.error(error);
+      setCourses([]);
     }
   };
-
-  // const fetchCourses = async () => {
-  //   try {
-  //     if (!currentUser) return;
-  //     const allCourses = await courseClient.fetchAllCourses();
-  //     const enrolledCourses = await userClient.findCoursesForUser(
-  //       currentUser._id
-  //     );
-  //     const courses = allCourses.map((course: any) => {
-  //       if (enrolledCourses.find((c: any) => c._id === course._id)) {
-  //         return { ...course, enrolled: true };
-  //       } else {
-  //         return course;
-  //       }
-  //     });
-  //     setCourses(courses);
-  //   } catch (error) {
-  //     console.error(error);
-  //   }
-  // };
 
   const fetchCourses = async () => {
     try {
@@ -66,8 +48,12 @@ export default function Kambaz() {
         currentUser._id
       );
       
-      // Guard against null/undefined
-      const coursesWithEnrollmentInfo = allCourses.map((course: any) => {
+      // Guard against null/undefined and filter out null items
+      const validCourses = Array.isArray(allCourses) 
+        ? allCourses.filter(c => c !== null && c !== undefined)
+        : [];
+      
+      const coursesWithEnrollmentInfo = validCourses.map((course: any) => {
         if (Array.isArray(enrolledCourses) && 
             enrolledCourses.some((c: any) => c && c._id === course._id)) {
           return { ...course, enrolled: true };
@@ -79,39 +65,56 @@ export default function Kambaz() {
       setCourses(coursesWithEnrollmentInfo);
     } catch (error) {
       console.error("Error fetching courses:", error);
-      // Fallback to empty array on error
       setCourses([]);
     }
   };
 
   const updateEnrollment = async (courseId: string, enrolled: boolean) => {
-    try{
-    console.log(`Attempting to ${enrolled ? 'enroll in' : 'unenroll from'} course ${courseId}`);
-    if (enrolled) {
-      await userClient.enrollIntoCourse(currentUser._id, courseId);
-    } else {
-      await userClient.unenrollFromCourse(currentUser._id, courseId);
+    try {
+      console.log(`Attempting to ${enrolled ? 'enroll in' : 'unenroll from'} course ${courseId}`);
+      if (enrolled) {
+        await userClient.enrollIntoCourse(currentUser._id, courseId);
+      } else {
+        await userClient.unenrollFromCourse(currentUser._id, courseId);
+      }
+      console.log('API call successful');
+      
+      // Update the local state immediately for a better UX
+      setCourses(prevCourses => 
+        prevCourses.map((c) => {
+          // Add null check here
+          if (c && c._id === courseId) {
+            return { ...c, enrolled: enrolled };
+          }
+          return c;
+        })
+      );
+      
+      // Also refresh the course list to ensure we have the latest data
+      if (enrolling) {
+        await fetchCourses();
+      } else {
+        await findCoursesForUser();
+      }
+    } catch (error) {
+      console.error(`Error ${enrolled ? 'enrolling' : 'unenrolling'}:`, error);
     }
-    console.log('API call successful');
-    setCourses(
-      courses.map((course) => {
-        if (course._id === courseId) {
-          return { ...course, enrolled: enrolled };
-        } else {
-          return course;
-        }
-      })
-    );
-  }catch (error) {
-    console.error(`Error ${enrolled ? 'enrolling' : 'unenrolling'}:`, error);
-  }
   };
- 
 
   const addNewCourse = async () => {
     try {
       const newCourse = await courseClient.createCourse(course);
-      setCourses([...courses, newCourse]);
+      
+      // Add the new course to the list with a null check
+      if (newCourse) {
+        setCourses(prevCourses => [...prevCourses, newCourse]);
+      }
+      
+      // Reset the course form
+      setCourse({
+        name: "New Course",
+        description: "New Description"
+      });
     } catch (error) {
       console.error("Error creating course:", error);
     }
@@ -120,7 +123,19 @@ export default function Kambaz() {
   const deleteCourse = async (courseId: string) => {
     try {
       await courseClient.deleteCourse(courseId);
-      setCourses(courses.filter((course) => course._id !== courseId));
+      
+      // Filter out the deleted course with null check
+      setCourses(prevCourses => 
+        prevCourses.filter((c) => c && c._id !== courseId)
+      );
+      
+      // If we deleted the currently selected course, reset the form
+      if (course && course._id === courseId) {
+        setCourse({
+          name: "New Course",
+          description: "New Description"
+        });
+      }
     } catch (error) {
       console.error("Error deleting course:", error);
     }
@@ -128,10 +143,18 @@ export default function Kambaz() {
 
   const updateCourse = async () => {
     try {
+      // Make sure we have a valid course to update
+      if (!course || !course._id) {
+        console.error("No valid course selected for update");
+        return;
+      }
+      
       await courseClient.updateCourse(course);
-      setCourses(
-        courses.map((c) => {
-          if (c._id === course._id) {
+      
+      // Update the course in the list with null check
+      setCourses(prevCourses =>
+        prevCourses.map((c) => {
+          if (c && c._id === course._id) {
             return course;
           } else {
             return c;
@@ -167,7 +190,7 @@ export default function Kambaz() {
               element={
                 <ProtectedRoute>
                   {React.createElement(Dashboard, {
-                    courses,
+                    courses: courses.filter(c => c !== null), // Ensure we don't pass null courses
                     course,
                     setCourse,
                     addNewCourse,
@@ -185,7 +208,9 @@ export default function Kambaz() {
               path="/Courses/:cid/*"
               element={
                 <ProtectedRoute requiresEnrollment={true}>
-                  {React.createElement(Courses, { courses })}
+                  {React.createElement(Courses, { 
+                    courses: courses.filter(c => c !== null) // Ensure we don't pass null courses
+                  })}
                 </ProtectedRoute>
               }
             />
