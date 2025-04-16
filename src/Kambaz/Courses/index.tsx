@@ -3,14 +3,11 @@ import Modules from "./Modules";
 import Home from "./Home";
 import Assignments from "./Assignments";
 import AssignmentEditor from "./Assignments/Editor";
-// import PeopleTable from "./People/Table";
-import { Navigate, Route, Routes, useParams, useLocation } from "react-router";
-import { FaAlignJustify } from "react-icons/fa";
-import { useSelector } from "react-redux";
-import Quizzes from "./Quizzes/QuizList";
-import QuizEditor from "./Quizzes/Editor";
-import QuizTaker from "./Quizzes/Taker";
+import QuizList from "./Quizzes/QuizList"; // Update this import
+import Details from "./Quizzes/Details"; // Add this import
 import People from "./People";
+import { Navigate, Route, Routes, useParams, useLocation } from "react-router";
+import { useSelector } from "react-redux";
 
 export default function Courses() {
   const { cid } = useParams();
@@ -19,12 +16,12 @@ export default function Courses() {
   const course = courses.find((course: any) => course._id === cid);
   
   const { pathname } = useLocation();
+  const currentSection = pathname.split("/")[4] || "Home";
   
   return (
     <div id="wd-courses">
       <h2 className="text-danger">
-        <FaAlignJustify className="me-4 fs-4 mb-1" />
-        {course && course.name} &gt; {pathname.split("/")[4]}
+        {course && course.name} &gt; {currentSection}
       </h2>
       <hr />
       <div className="d-flex">
@@ -41,12 +38,13 @@ export default function Courses() {
                 <Route path="Assignments" element={<Assignments />} />
                 <Route path="Assignments/new" element={<AssignmentEditor />} />
                 <Route path="Assignments/:aid" element={<AssignmentEditor />} />
-                <Route path="Quizzes" element={<Quizzes />} />
-                <Route path="Quizzes/Create" element={<QuizEditor />} />
-                <Route path="Quizzes/:qid/Edit" element={<QuizEditor />} />
-                <Route path="Quizzes/:qid/Take" element={<QuizTaker />} />
+                
+                {/* Quiz routes */}
+                <Route path="Quizzes" element={<QuizList />} />
+                <Route path="Quizzes/new" element={<Details />} />
+                <Route path="Quizzes/:qid" element={<Details />} />
+                
                 <Route path="Grades" element={<h2>Grades</h2>} />
-                {/* <Route path="People" element={<PeopleTable />} /> */}
                 <Route path="People" element={<People />} />
             </Routes>
         </div>

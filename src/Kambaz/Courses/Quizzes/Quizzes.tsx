@@ -144,33 +144,10 @@ export default function QuizList() {
     };
 
     const handleAddQuiz = () => {
-        // Create a new quiz with a default name and navigate to the edit screen
-        // navigate(`/Kambaz/Courses/${cid}/Quizzes/new`);
-        console.log("Add Quiz clicked, navigating to:", `/Kambaz/Courses/${cid}/Quizzes/new`);
         navigate(`/Kambaz/Courses/${cid}/Quizzes/new`);
     };
 
     // Check if a quiz is available based on dates
-    // const getAvailabilityStatus = (quiz: any) => {
-    //     const now = new Date();
-    //     const availableFrom = quiz.availableFromDate ? new Date(quiz.availableFromDate) : null;
-    //     const availableUntil = quiz.availableUntilDate ? new Date(quiz.availableUntilDate) : null;
-        
-    //     if (!availableFrom) {
-    //         return "Not available";
-    //     }
-        
-    //     if (now < availableFrom) {
-    //         return `Not available until ${formatDate(quiz.availableFromDate)}`;
-    //     }
-        
-    //     if (availableUntil && now > availableUntil) {
-    //         return "Closed";
-    //     }
-        
-    //     return "Available";
-    // };
-
     const getAvailabilityStatus = (quiz: any) => {
         const now = new Date();
         const availableFrom = quiz.availableFromDate ? new Date(quiz.availableFromDate) : null;
@@ -192,12 +169,33 @@ export default function QuizList() {
     };
     
     return (
-        <div>    
+        <div>
+            {/* Course-specific header */}
+            <div>
+                <h2 className="text-danger m-0">
+                    {courseName} &gt; Quizzes
+                </h2>
+            </div>
+            
+            <hr className="mt-2 mb-3" />
+            
             <div className="row">
+                {/* Left Navigation - Using existing CourseNavigation component */}
+                <div className="col-md-2 d-none d-md-block">
+                    <CourseNavigation />
+                </div>
+                
                 {/* Main Content */}
-                <div className="col-md-11 ps-0">
+                <div className="col-md-10 ps-0">
+                    {/* Student View button */}
+                    <div className="d-flex justify-content-end mb-3">
+                        <button className="btn btn-outline-secondary">
+                            <i className="fas fa-user"></i> Student View
+                        </button>
+                    </div>
+                    
                     {/* Search and Add Quiz controls */}
-                    <div className="d-flex justify-content-between align-items-center my-3">
+                    <div className="d-flex justify-content-between align-items-center my-3 ms-0">
                         <div>
                             <input
                                 type="text"
@@ -205,10 +203,7 @@ export default function QuizList() {
                                 placeholder="Search for Quiz"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                style={{ width: "320px",
-                                         marginLeft: "15px"
-                                    }}
-                                
+                                style={{ width: "320px" }}
                             />
                         </div>
                         <div className="d-flex">
@@ -218,38 +213,14 @@ export default function QuizList() {
                             >
                                 + Quiz
                             </button>
-                            <Dropdown>
-                                <Dropdown.Toggle 
-                                    variant="outline-secondary" 
-                                    id="dropdown-basic"
-                                    className="d-flex align-items-center justify-content-center"
-                                    style={{ 
-                                        width: '38px', 
-                                        height: '38px', 
-                                        padding: '0', 
-                                        borderRadius: '4px' 
-                                    }}
-                                >
-                                    <i className="fas fa-ellipsis-v"></i>
-                                </Dropdown.Toggle>
-
-                                <Dropdown.Menu align="end">
-                                    <Dropdown.Item href="#">Edit</Dropdown.Item>
-                                    <Dropdown.Item href="#">Delete</Dropdown.Item>
-                                    <Dropdown.Item href="#">Publish</Dropdown.Item>
-                                    <Dropdown.Item href="#">Copy</Dropdown.Item>
-                                    <Dropdown.Divider />
-                                    <Dropdown.Item href="#">Sort by Name</Dropdown.Item>
-                                    <Dropdown.Item href="#">Sort by Due Date</Dropdown.Item>
-                                    <Dropdown.Item href="#">Sort by Available Date</Dropdown.Item>
-                                </Dropdown.Menu>
-                            </Dropdown>
+                            <button className="btn btn-light">
+                                <i className="fas fa-ellipsis-v"></i>
+                            </button>
                         </div>
                     </div>
                     
                     {/* Quizzes Container */}
-                    <div className="border rounded"
-                    style={{ borderColor: "#ced4da", borderWidth: "1px", marginLeft: "15px" }}>
+                    <div className="border rounded">
                         {/* Quizzes Header */}
                         <div className="p-2 d-flex justify-content-between align-items-center bg-light border-bottom">
                             <div className="d-flex align-items-center">
@@ -263,93 +234,77 @@ export default function QuizList() {
                             <div className="p-4 text-center text-muted">
                                 <div>No quizzes found for this course.</div>
                                 <div className="mt-2">Click "+ Quiz" to add a new quiz.</div>
+                                <div className="mt-1 text-secondary">
+                                    <small>Debug: Found {allQuizzes?.length || 0} total quizzes, looking for course ID: {cid}</small>
+                                </div>
                             </div>
                         ) : (
                             <div>
-                                {courseQuizzes.map((quiz: any, index: number) => {
-                                    const status = getAvailabilityStatus(quiz);
-                                    const isClosed = status === "Closed";
-                                    const isNotAvailable = status.includes("Not available until");
-                                    
-                                    return (
-                                        <div 
-                                            key={`${quiz._id || quiz.id}-${refreshKey}`} 
-                                            className="border-bottom"
-                                            style={{ padding: "12px 15px" }}
-                                        >
-                                            <div className="d-flex justify-content-between align-items-start">
-                                                <div className="d-flex">
-                                                    <div className="me-3">
-                                                        <svg className="text-success" width="20" height="20" viewBox="0 0 24 24">
-                                                            <path fill="currentColor" d="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"></path>
-                                                        </svg>
-                                                    </div>
-                                                    <div>
-                                                        <div className="mb-1">
-                                                            <a 
-                                                                href="#"
-                                                                onClick={(e) => {
-                                                                    e.preventDefault();
-                                                                    handleQuizClick(quiz._id || quiz.id);
-                                                                }}
-                                                                className="text-dark fw-medium text-decoration-none"
-                                                            >
-                                                                {quiz.title || "Untitled Quiz"}
-                                                            </a>
-                                                        </div>
-                                                        <div className="text-secondary small">
-                                                            <span>{status} | </span>
-                                                            <span>Due {formatDate(quiz.dueDate)} | </span>
-                                                            <span>{quiz.points} pts | </span>
-                                                            <span>{quiz.questions?.length || 0} Questions</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <div className="d-flex align-items-center">
-                                                    {/* Published status (checkmark) */}
-                                                    <button 
-                                                        className={`btn btn-sm rounded-circle ${quiz.published ? "text-white bg-success" : "text-success border border-success"}`}
-                                                        onClick={() => isFaculty && !isClosed && handlePublishToggle(quiz._id, quiz.published)}
-                                                        style={{ 
-                                                            width: "30px", 
-                                                            height: "30px", 
-                                                            padding: 0,
-                                                            opacity: isClosed ? 0.5 : 1,
-                                                            cursor: isFaculty && !isClosed ? 'pointer' : 'default' 
+                                {courseQuizzes.map((quiz: any, index: number) => (
+                                    <div 
+                                        key={`${quiz._id || quiz.id}-${refreshKey}`} 
+                                        className="border-bottom"
+                                        style={{ borderLeft: "4px solid #28a745", padding: "12px 15px" }}
+                                    >
+                                        <div className="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <div className="d-flex align-items-center mb-1">
+                                                    <svg className="text-success me-2" width="20" height="20" viewBox="0 0 24 24">
+                                                        <path fill="currentColor" d="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"></path>
+                                                    </svg>
+                                                    <a 
+                                                        href="#"
+                                                        onClick={(e) => {
+                                                            e.preventDefault();
+                                                            handleQuizClick(quiz._id || quiz.id);
                                                         }}
-                                                        disabled={isClosed}
+                                                        className="text-primary text-decoration-none"
+                                                        style={{ fontSize: "16px" }}
                                                     >
-                                                        <i className="fas fa-check"></i>
-                                                    </button>
-                                                    
-                                                    {/* Context menu */}
-                                                    <div className="ms-2">
-                                                        <Dropdown>
-                                                            <Dropdown.Toggle 
-                                                                variant="link" 
-                                                                id={`dropdown-${quiz._id}`} 
-                                                                className="text-secondary p-0"
-                                                            >
-                                                                <i className="fas fa-ellipsis-v"></i>
-                                                            </Dropdown.Toggle>
-                                                            <Dropdown.Menu align="end">
-                                                                <Dropdown.Item onClick={() => handleEditClick(quiz._id)}>Edit</Dropdown.Item>
-                                                                <Dropdown.Item onClick={() => handleDeleteClick(quiz._id)}>Delete</Dropdown.Item>
-                                                                <Dropdown.Item 
-                                                                    onClick={() => handlePublishToggle(quiz._id, quiz.published)}
-                                                                    disabled={isClosed}
-                                                                >
-                                                                    {quiz.published ? 'Unpublish' : 'Publish'}
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item>Copy</Dropdown.Item>
-                                                            </Dropdown.Menu>
-                                                        </Dropdown>
-                                                    </div>
+                                                        {quiz.title || "Untitled Quiz"}
+                                                    </a>
+                                                </div>
+                                                <div className="ms-4 text-secondary">
+                                                    {getAvailabilityStatus(quiz) === "Closed" ? (
+                                                        <span>Closed | </span>
+                                                    ) : getAvailabilityStatus(quiz) === "Available" ? (
+                                                        <span>Available | </span>
+                                                    ) : (
+                                                        <span>{getAvailabilityStatus(quiz)} | </span>
+                                                    )}
+                                                    <span>Due {formatDate(quiz.dueDate)} | </span>
+                                                    <span>{quiz.points} pts | </span>
+                                                    <span>{quiz.questions?.length || 0} Questions</span>
                                                 </div>
                                             </div>
+                                            <div className="d-flex align-items-center">
+                                                {/* Published status (checkmark) */}
+                                                <span 
+                                                    className={`me-3 fs-5 ${quiz.published ? "text-success" : "text-danger"}`}
+                                                    onClick={() => isFaculty && handlePublishToggle(quiz._id, quiz.published)}
+                                                    style={{ cursor: isFaculty ? 'pointer' : 'default' }}
+                                                >
+                                                    {quiz.published ? "✓" : "🚫"}
+                                                </span>
+                                                
+                                                {/* Context menu */}
+                                                <Dropdown>
+                                                    <Dropdown.Toggle variant="link" id={`dropdown-${quiz._id}`} className="text-secondary p-0">
+                                                        <i className="fas fa-ellipsis-v"></i>
+                                                    </Dropdown.Toggle>
+                                                    <Dropdown.Menu align="end">
+                                                        <Dropdown.Item onClick={() => handleEditClick(quiz._id)}>Edit</Dropdown.Item>
+                                                        <Dropdown.Item onClick={() => handleDeleteClick(quiz._id)}>Delete</Dropdown.Item>
+                                                        <Dropdown.Item onClick={() => handlePublishToggle(quiz._id, quiz.published)}>
+                                                            {quiz.published ? 'Unpublish' : 'Publish'}
+                                                        </Dropdown.Item>
+                                                        <Dropdown.Item>Copy</Dropdown.Item>
+                                                    </Dropdown.Menu>
+                                                </Dropdown>
+                                            </div>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                ))}
                             </div>
                         )}
                     </div>

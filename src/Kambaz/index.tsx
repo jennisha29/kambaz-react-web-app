@@ -10,12 +10,10 @@ import Enrollments from "./Courses/Enrollment/index";
 import Session from "./Account/Session";
 import * as courseClient from "./Courses/client";
 import * as userClient from "./Account/client";
+import QuizEditor from "./Courses/Quizzes/QuizEditor";
+import QuizList from "./Courses/Quizzes/QuizList";
+import Details from "./Courses/Quizzes/Details";
 import "./styles.css";
-
-import Quizzes from "./Courses/Quizzes/QuizList";
-import QuizEditor from "./Courses/Quizzes/Editor";
-import QuizTaker from "./Courses/Quizzes/Taker";
-import QuizResults from "./Courses/Quizzes/Results";
 
 export default function Kambaz() {
   const [courses, setCourses] = useState<any[]>([]);
@@ -133,7 +131,6 @@ export default function Kambaz() {
 
   const updateCourse = async () => {
     try {
-
       if (!course || !course._id) {
         console.error("No valid course selected for update");
         return;
@@ -141,7 +138,6 @@ export default function Kambaz() {
       
       await courseClient.updateCourse(course);
       
-
       setCourses(prevCourses =>
         prevCourses.map((c) => {
           if (c && c._id === course._id) {
@@ -205,16 +201,17 @@ export default function Kambaz() {
               }
             />
 
-            <Route
+            {/* Quiz routes */}
+            {/* <Route
               path="/Courses/:cid/Quizzes"
               element={
                 <ProtectedRoute requiresEnrollment={true}>
-                  <Quizzes />
+                  <QuizList />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/Courses/:cid/Quizzes/:qid"
+              path="/Courses/:cid/Quizzes/new"
               element={
                 <ProtectedRoute requiresEnrollment={true}>
                   <QuizEditor />
@@ -222,22 +219,25 @@ export default function Kambaz() {
               }
             />
             <Route
-              path="/Courses/:cid/Quizzes/:qid/Take"
+              path="/Courses/:cid/Quizzes/:qid"
               element={
                 <ProtectedRoute requiresEnrollment={true}>
-                  <QuizTaker />
+                  <Details />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/Courses/:cid/Quizzes/:qid/Results"
-              element={
-                <ProtectedRoute requiresEnrollment={true}>
-                  <QuizResults />
-                </ProtectedRoute>
-              }
-            />
-
+            path="/Courses/:cid/Quizzes/:qid/edit"
+            element={
+            <ProtectedRoute requiresEnrollment={true}>
+              <QuizEditor />
+              <div className="p-4">
+                <h2>Quiz Editor Test</h2>
+                <p>This is a test to see if the route is working correctly.</p>
+              </div>
+            </ProtectedRoute>
+          }/> */}
+            
             <Route
               path="/Enrollments"
               element={
