@@ -1,5 +1,5 @@
 import { createSlice } from "@reduxjs/toolkit";
-import { Quiz, QuizAttempt, QuizQuestion } from "./client";
+import { Quiz, QuizAttempt} from "./client";
 
 interface QuizzesState {
   quizzes: Quiz[];
