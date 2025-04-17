@@ -4,9 +4,10 @@ import { useSelector, useDispatch } from "react-redux";
 import { setQuizzes, deleteQuiz, setQuizPublished } from "./reducer";
 import { Dropdown } from "react-bootstrap";
 import * as client from "./client";
+import GreenCheckmark from "../Modules/GreenCheckmark"; // Import GreenCheckmark component
 
 // Import icons
-import { FaRocket, FaCheck, FaBan, FaEllipsisV } from "react-icons/fa";
+import { FaEllipsisV } from "react-icons/fa";
 
 export default function QuizList() {
     const { cid } = useParams();
@@ -22,11 +23,9 @@ export default function QuizList() {
     const { currentUser } = useSelector((state: any) => state.accountReducer || {});
     const isFaculty = currentUser && currentUser.role === "FACULTY";
     
-    // Get course information
+    // // Get course information - Will use this in future implementations
     // const { courses } = useSelector((state: any) => state.coursesReducer || { courses: [] });
-    // const course = useMemo(() => courses.find((c: any) => c._id === cid), [courses, cid]);
-    // const courseName = course?.name || "Course";
-
+    
     const fetchQuizzes = async () => {
         try {
             if (cid) {
@@ -203,30 +202,6 @@ export default function QuizList() {
         return "Available";
     };
     
-    // Styles for publish status icons
-    const publishedIconStyle = {
-        backgroundColor: "#28a745",
-        color: "white", 
-        borderRadius: "50%", 
-        width: "30px", 
-        height: "30px", 
-        display: "flex", 
-        alignItems: "center", 
-        justifyContent: "center"
-    };
-    
-    const unpublishedIconStyle = {
-        backgroundColor: "white",
-        color: "#dc3545", 
-        border: "2px solid #dc3545",
-        borderRadius: "50%", 
-        width: "30px", 
-        height: "30px", 
-        display: "flex", 
-        alignItems: "center", 
-        justifyContent: "center"
-    };
-    
     return (
         <div>    
             <div className="row">
@@ -307,7 +282,6 @@ export default function QuizList() {
                                 {courseQuizzes.map((quiz: any) => {
                                     const status = getAvailabilityStatus(quiz);
                                     const isClosed = status === "Closed";
-                                    // const isNotAvailable = status.includes("Not available until");
                                     
                                     return (
                                         <div 
@@ -318,11 +292,10 @@ export default function QuizList() {
                                             <div className="d-flex justify-content-between align-items-start">
                                                 <div className="d-flex">
                                                     <div className="me-3 mt-1">
-                                                        {/* Replace SVG with Rocket icon */}
-                                                        <FaRocket 
-                                                            className="text-success" 
-                                                            size={18} 
-                                                        />
+                                                        {/* Rocket leaving icon - smaller size to match screenshot */}
+                                                        <svg width="20" height="20" viewBox="0 0 24 24" className="text-success">
+                                                            <path fill="currentColor" d="M13.13,22.19L11.5,18.36C13.07,17.78 14.54,17 15.9,16.09L13.13,22.19M5.64,12.5L1.81,10.87L7.91,8.1C7,9.46 6.22,10.93 5.64,12.5M21.61,2.39C21.61,2.39 16.66,0.269 11,5.93C8.81,8.12 7.5,10.53 6.65,12.64C6.37,13.39 6.56,14.21 7.11,14.77L9.24,16.89C9.79,17.45 10.61,17.63 11.36,17.35C13.5,16.53 15.88,15.19 18.07,13C23.73,7.34 21.61,2.39 21.61,2.39M14.54,9.46C13.76,8.68 13.76,7.41 14.54,6.63C15.32,5.85 16.59,5.85 17.37,6.63C18.14,7.41 18.15,8.68 17.37,9.46C16.59,10.24 15.32,10.24 14.54,9.46Z"/>
+                                                        </svg>
                                                     </div>
                                                     <div>
                                                         <div className="mb-1">
@@ -340,36 +313,44 @@ export default function QuizList() {
                                                         </div>
                                                         <div className="text-secondary" style={{ fontSize: "13px" }}>
                                                             {/* Status display */}
-                                                            <span style={{ fontWeight: isClosed ? "bold" : "normal" }}>
+                                                            <span>
                                                                 {status} | 
                                                             </span>
-                                                            <span> Due {formatDate(quiz.dueDate)} | </span>
+                                                            <span><span> Due</span> {formatDate(quiz.dueDate)} | </span>
                                                             <span>{quiz.points} pts | </span>
                                                             <span>{quiz.questions?.length || 0} Questions</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="d-flex align-items-center">
-                                                    {/* Published status icon - green checkmark or red prohibition */}
+                                                    {/* Published/Unpublished icon */}
                                                     <div 
-                                                        style={quiz.published ? publishedIconStyle : unpublishedIconStyle}
                                                         onClick={() => isFaculty && !isClosed && handlePublishToggle(quiz._id, quiz.published)}
-                                                        className={isFaculty && !isClosed ? "cursor-pointer" : ""}
+                                                        style={{ 
+                                                            cursor: isFaculty && !isClosed ? 'pointer' : 'default',
+                                                            marginRight: "10px"
+                                                        }}
                                                     >
                                                         {quiz.published ? (
-                                                            <FaCheck size={14} />
+                                                            // Use the GreenCheckmark component for published quizzes
+                                                            <GreenCheckmark />
                                                         ) : (
-                                                            <FaBan size={14} />
+                                                            // Red prohibition sign (single icon) for unpublished quizzes
+                                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                                                                <circle cx="12" cy="12" r="10" stroke="#b21e35" strokeWidth="2.5" />
+                                                                <line x1="5" y1="5" x2="19" y2="19" stroke="#b21e35" strokeWidth="2.5" />
+                                                            </svg>
                                                         )}
                                                     </div>
                                                     
-                                                    {/* Context menu */}
-                                                    <div className="ms-2">
+                                                    {/* Context menu - three dots only, no dropdown arrow */}
+                                                    <div>
                                                         <Dropdown>
                                                             <Dropdown.Toggle 
-                                                                variant="link" 
-                                                                id={`dropdown-${quiz._id}`} 
-                                                                className="text-secondary p-0"
+                                                                as="div" 
+                                                                id={`dropdown-${quiz._id}`}
+                                                                className="text-secondary p-0 d-flex" 
+                                                                style={{ cursor: 'pointer' }}
                                                             >
                                                                 <FaEllipsisV />
                                                             </Dropdown.Toggle>

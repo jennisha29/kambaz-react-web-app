@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Form, Button, Nav, Dropdown } from "react-bootstrap";
 import { useDispatch } from "react-redux";
-import { addQuiz } from "./reducer";
+import { addQuiz, updateQuiz } from "./reducer";
 import * as client from "./client";
 import { Quiz } from "./client";
 import { FaLock, FaBan, FaCheck, FaEdit, FaEye } from "react-icons/fa";
@@ -12,6 +12,9 @@ export default function QuizEditor() {
   const { qid, cid } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  
+  // Determine if we're editing an existing quiz or creating a new one
+  const isNewQuiz = !qid || qid === "new";
   
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
@@ -122,21 +125,21 @@ export default function QuizEditor() {
     fetchQuiz();
   }, [qid, cid]);
 
-  // This is the key function that needs fixing
+  // Updated saveQuiz function to handle both create and update
   const saveQuiz = async (publish = false) => {
     if (!quiz) return;
     try {
       // Get assignment dates
       const firstAssignment = assignments[0];
 
-          const combineDateTime = (date: string, time: string) => {
-      if (!date) return "";
-      // Create date object in local timezone to avoid timezone shifts
-      const [year, month, day] = date.split('-').map(num => parseInt(num));
-      const [hours, minutes] = time.split(':').map(num => parseInt(num));
-      const dateObj = new Date(year, month - 1, day, hours, minutes);
-      return dateObj.toISOString();
-    };
+      const combineDateTime = (date: string, time: string) => {
+        if (!date) return "";
+        // Create date object in local timezone to avoid timezone shifts
+        const [year, month, day] = date.split('-').map(num => parseInt(num));
+        const [hours, minutes] = time.split(':').map(num => parseInt(num));
+        const dateObj = new Date(year, month - 1, day, hours, minutes);
+        return dateObj.toISOString();
+      };
       
       // Format dates
       const dueDate = combineDateTime(firstAssignment.dueDate, firstAssignment.dueTime || "23:59");
@@ -149,8 +152,8 @@ export default function QuizEditor() {
         firstAssignment.availableUntilTime || "23:59"
       );
       
-      // Create quiz data WITHOUT _id field (crucial for new quiz creation)
-      const newQuizData = {
+      // Create quiz data
+      const quizData = {
         title: quiz.title,
         description: quiz.description || "",
         quizType: quiz.quizType,
@@ -173,25 +176,47 @@ export default function QuizEditor() {
         questions: quiz.questions || []
       };
       
-      console.log("Creating new quiz with data:", JSON.stringify(newQuizData, null, 2));
-      
-      // Call the createQuiz function
-      const savedQuiz = await client.createQuiz(cid as string, newQuizData);
-      console.log("New quiz created:", savedQuiz);
-      
-      // Update redux store
-      dispatch(addQuiz(savedQuiz));
-      
-      // Show success message
-      alert("Quiz created successfully!");
+      // If editing an existing quiz
+      if (!isNewQuiz) {
+        // Include the _id field for updates
+        const quizToUpdate = {
+          ...quizData,
+          _id: qid
+        };
+        
+        console.log("Updating quiz with data:", JSON.stringify(quizToUpdate, null, 2));
+        
+        // Call the updateQuiz function
+        const updatedQuiz = await client.updateQuiz(quizToUpdate);
+        console.log("Quiz updated:", updatedQuiz);
+        
+        // Update redux store
+        dispatch(updateQuiz(updatedQuiz));
+        
+        // Show success message
+        alert("Quiz updated successfully!");
+      } else {
+        // Creating a new quiz
+        console.log("Creating new quiz with data:", JSON.stringify(quizData, null, 2));
+        
+        // Call the createQuiz function
+        const savedQuiz = await client.createQuiz(cid as string, quizData);
+        console.log("New quiz created:", savedQuiz);
+        
+        // Update redux store
+        dispatch(addQuiz(savedQuiz));
+        
+        // Show success message
+        alert("Quiz created successfully!");
+      }
       
       // Navigate back to quiz list
       navigate(`/Kambaz/Courses/${cid}/Quizzes`);
     } catch (error: any) {
-      console.error("Error creating quiz:", error);
+      console.error("Error saving quiz:", error);
       
       // Show detailed error
-      let errorMessage = "Failed to create quiz. Please try again.";
+      let errorMessage = `Failed to ${isNewQuiz ? 'create' : 'update'} quiz. Please try again.`;
       
       if (error && typeof error === 'object') {
         if ('response' in error && error.response && typeof error.response === 'object') {
@@ -232,30 +257,33 @@ export default function QuizEditor() {
   return (
     <div className="container-fluid px-0">
       {/* Header with Points and Published status */}
-      <div className="d-flex justify-content-end align-items-center mb-2 px-3">
-        <span className="text-secondary me-3">Points {calculateTotalPoints()}</span>
-        <div className="d-flex align-items-center me-3">
-          {quiz.published ? (
-            <FaCheck className="me-2 text-success" />
-          ) : (
-            <FaBan className="me-2 text-secondary" />
-          )}
-          <span className="text-secondary">
-            {quiz.published ? "Published" : "Not Published"}
-          </span>
+      <div className="d-flex justify-content-between align-items-center mb-2 px-3">
+        <h1 className="mb-0">{isNewQuiz ? "Create Quiz" : "Edit Quiz"}</h1>
+        <div className="d-flex align-items-center">
+          <span className="text-secondary me-3">Points {calculateTotalPoints()}</span>
+          <div className="d-flex align-items-center me-3">
+            {quiz.published ? (
+              <FaCheck className="me-2 text-success" />
+            ) : (
+              <FaBan className="me-2 text-secondary" />
+            )}
+            <span className="text-secondary">
+              {quiz.published ? "Published" : "Not Published"}
+            </span>
+          </div>
+          <Dropdown>
+            <Dropdown.Toggle variant="light" className="border" id="dropdown-options">
+              <BsThreeDotsVertical />
+            </Dropdown.Toggle>
+            <Dropdown.Menu align="end">
+              <Dropdown.Item><FaEdit className="me-2" /> Edit Title</Dropdown.Item>
+              <Dropdown.Item onClick={() => saveQuiz(true)}><FaCheck className="me-2" /> Publish</Dropdown.Item>
+              <Dropdown.Item><FaEye className="me-2" /> Preview</Dropdown.Item>
+              <Dropdown.Divider />
+              <Dropdown.Item><FaLock className="me-2" /> Lock Quiz</Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
         </div>
-        <Dropdown>
-          <Dropdown.Toggle variant="light" className="border" id="dropdown-options">
-            <BsThreeDotsVertical />
-          </Dropdown.Toggle>
-          <Dropdown.Menu align="end">
-            <Dropdown.Item><FaEdit className="me-2" /> Edit Title</Dropdown.Item>
-            <Dropdown.Item onClick={() => saveQuiz(true)}><FaCheck className="me-2" /> Publish</Dropdown.Item>
-            <Dropdown.Item><FaEye className="me-2" /> Preview</Dropdown.Item>
-            <Dropdown.Divider />
-            <Dropdown.Item><FaLock className="me-2" /> Lock Quiz</Dropdown.Item>
-          </Dropdown.Menu>
-        </Dropdown>
       </div>
 
       {/* Tabs */}
@@ -540,7 +568,7 @@ export default function QuizEditor() {
                 onClick={() => saveQuiz(false)}
                 type="button" // Prevent form submission
               >
-                Save
+                {isNewQuiz ? "Create" : "Save"}
               </Button>
             </div>
           </Form>
@@ -564,7 +592,7 @@ export default function QuizEditor() {
               Cancel
             </Button>
             <Button variant="danger" onClick={() => saveQuiz(false)} type="button">
-              Save
+              {isNewQuiz ? "Create" : "Save"}
             </Button>
           </div>
         </div>

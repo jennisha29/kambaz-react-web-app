@@ -67,7 +67,13 @@ export default function Details() {
   }, [qid, cid, dispatch]);
   
   const handleEdit = () => {
+    console.log("Edit button clicked, navigating to edit page");
+    console.log(`Full navigation path: /Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
+
+    setTimeout(() => {
+      console.log("Current location after navigation:", window.location.pathname);
+    }, 500);
   };
   
   const handlePreview = () => {
@@ -164,11 +170,19 @@ export default function Details() {
             </tr>
             <tr>
               <td className="text-end text-secondary pe-3">Webcam Required</td>
-              <td>{quiz.webcamRequired || "No"}</td>
+              <td>{typeof quiz.webcamRequired === 'boolean' ? 
+              (quiz.webcamRequired ? "Yes" : "No") : 
+              quiz.webcamRequired || "No"}
+              </td>
+              {/* <td>{quiz.webcamRequired || "No"}</td> */}
             </tr>
             <tr>
               <td className="text-end text-secondary pe-3">Lock Questions After Answering</td>
-              <td>{quiz.lockQuestionsAfterAnswering || "No"}</td>
+              <td>{typeof quiz.lockQuestionsAfterAnswering === 'boolean' ? 
+              (quiz.lockQuestionsAfterAnswering ? "Yes" : "No") : 
+              quiz.lockQuestionsAfterAnswering || "No"}
+              </td>
+              {/* <td>{quiz.lockQuestionsAfterAnswering || "No"}</td> */}
             </tr>
           </tbody>
         </table>
