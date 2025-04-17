@@ -240,7 +240,7 @@ export default function QuizList() {
                             </div>
                         ) : (
                             <div>
-                                {courseQuizzes.map((quiz: any, index: number) => (
+                                {courseQuizzes.map((quiz: any) => (
                                     <div 
                                         key={`${quiz._id || quiz.id}-${refreshKey}`} 
                                         className="border-bottom"

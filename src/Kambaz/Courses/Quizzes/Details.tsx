@@ -78,9 +78,9 @@ export default function Details() {
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/take`);
   };
   
-  const handleBack = () => {
-    navigate(`/Kambaz/Courses/${cid}/Quizzes`);
-  };
+  // const handleBack = () => {
+  //   navigate(`/Kambaz/Courses/${cid}/Quizzes`);
+  // };
 
   if (loading) {
     return <div>Loading quiz details...</div>;
