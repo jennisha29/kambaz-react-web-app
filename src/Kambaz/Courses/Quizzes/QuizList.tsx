@@ -4,7 +4,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { setQuizzes, deleteQuiz, setQuizPublished } from "./reducer";
 import { Dropdown } from "react-bootstrap";
 import * as client from "./client";
-import CourseNavigation from "../Navigation"; // Import the existing CourseNavigation component
+
+// Import icons
+import { FaRocket, FaCheck, FaBan, FaEllipsisV } from "react-icons/fa";
 
 export default function QuizList() {
     const { cid } = useParams();
@@ -21,9 +23,9 @@ export default function QuizList() {
     const isFaculty = currentUser && currentUser.role === "FACULTY";
     
     // Get course information
-    const { courses } = useSelector((state: any) => state.coursesReducer || { courses: [] });
-    const course = useMemo(() => courses.find((c: any) => c._id === cid), [courses, cid]);
-    const courseName = course?.name || "Course";
+    // const { courses } = useSelector((state: any) => state.coursesReducer || { courses: [] });
+    // const course = useMemo(() => courses.find((c: any) => c._id === cid), [courses, cid]);
+    // const courseName = course?.name || "Course";
 
     const fetchQuizzes = async () => {
         try {
@@ -81,14 +83,26 @@ export default function QuizList() {
 
     const formatDate = (dateString: string): string => {
         try {
+            if (!dateString) return "No date set";
+            
+            // Create a new date using the provided string
             const date = new Date(dateString);
+            
+            // Check if the date is valid
+            if (isNaN(date.getTime())) {
+                return "Invalid date";
+            }
+        
             const month = date.toLocaleString('default', { month: 'short' });
             const day = date.getDate();
+            
+            // Format the time part
             const time = date.toLocaleString('default', { 
                 hour: 'numeric', 
                 minute: '2-digit', 
                 hour12: true 
             }).toLowerCase();
+            
             return `${month} ${day} at ${time}`;
         } catch (error) {
             console.error("Error formatting date:", error);
@@ -144,38 +158,36 @@ export default function QuizList() {
     };
 
     const handleAddQuiz = () => {
-        // Create a new quiz with a default name and navigate to the edit screen
-        // navigate(`/Kambaz/Courses/${cid}/Quizzes/new`);
         console.log("Add Quiz clicked, navigating to:", `/Kambaz/Courses/${cid}/Quizzes/new`);
         navigate(`/Kambaz/Courses/${cid}/Quizzes/new`);
     };
 
-    // Check if a quiz is available based on dates
-    // const getAvailabilityStatus = (quiz: any) => {
-    //     const now = new Date();
-    //     const availableFrom = quiz.availableFromDate ? new Date(quiz.availableFromDate) : null;
-    //     const availableUntil = quiz.availableUntilDate ? new Date(quiz.availableUntilDate) : null;
-        
-    //     if (!availableFrom) {
-    //         return "Not available";
-    //     }
-        
-    //     if (now < availableFrom) {
-    //         return `Not available until ${formatDate(quiz.availableFromDate)}`;
-    //     }
-        
-    //     if (availableUntil && now > availableUntil) {
-    //         return "Closed";
-    //     }
-        
-    //     return "Available";
-    // };
-
     const getAvailabilityStatus = (quiz: any) => {
-        const now = new Date();
-        const availableFrom = quiz.availableFromDate ? new Date(quiz.availableFromDate) : null;
-        const availableUntil = quiz.availableUntilDate ? new Date(quiz.availableUntilDate) : null;
+        if (!quiz) return "Not available";
         
+        const now = new Date();
+        
+        // Handle availableFromDate
+        let availableFrom = null;
+        if (quiz.availableFromDate) {
+            availableFrom = new Date(quiz.availableFromDate);
+            // Ensure the date is valid
+            if (isNaN(availableFrom.getTime())) {
+                availableFrom = null;
+            }
+        }
+        
+        // Handle availableUntilDate
+        let availableUntil = null;
+        if (quiz.availableUntilDate) {
+            availableUntil = new Date(quiz.availableUntilDate);
+            // Ensure the date is valid
+            if (isNaN(availableUntil.getTime())) {
+                availableUntil = null;
+            }
+        }
+        
+        // Check availability status
         if (!availableFrom) {
             return "Not available";
         }
@@ -189,6 +201,30 @@ export default function QuizList() {
         }
         
         return "Available";
+    };
+    
+    // Styles for publish status icons
+    const publishedIconStyle = {
+        backgroundColor: "#28a745",
+        color: "white", 
+        borderRadius: "50%", 
+        width: "30px", 
+        height: "30px", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center"
+    };
+    
+    const unpublishedIconStyle = {
+        backgroundColor: "white",
+        color: "#dc3545", 
+        border: "2px solid #dc3545",
+        borderRadius: "50%", 
+        width: "30px", 
+        height: "30px", 
+        display: "flex", 
+        alignItems: "center", 
+        justifyContent: "center"
     };
     
     return (
@@ -205,16 +241,18 @@ export default function QuizList() {
                                 placeholder="Search for Quiz"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                style={{ width: "320px",
-                                         marginLeft: "15px"
-                                    }}
-                                
+                                style={{ 
+                                    width: "320px",
+                                    marginLeft: "15px",
+                                    fontSize: "14px"
+                                }}
                             />
                         </div>
                         <div className="d-flex">
                             <button 
                                 className="btn btn-danger me-2"
                                 onClick={handleAddQuiz}
+                                style={{ fontSize: "14px" }}
                             >
                                 + Quiz
                             </button>
@@ -230,7 +268,7 @@ export default function QuizList() {
                                         borderRadius: '4px' 
                                     }}
                                 >
-                                    <i className="fas fa-ellipsis-v"></i>
+                                    <FaEllipsisV />
                                 </Dropdown.Toggle>
 
                                 <Dropdown.Menu align="end">
@@ -254,7 +292,7 @@ export default function QuizList() {
                         <div className="p-2 d-flex justify-content-between align-items-center bg-light border-bottom">
                             <div className="d-flex align-items-center">
                                 <span className="me-1">▾</span>
-                                <span className="fw-bold">Assignment Quizzes</span>
+                                <span className="fw-bold" style={{ fontSize: "15px" }}>Assignment Quizzes</span>
                             </div>
                         </div>
                         
@@ -266,10 +304,10 @@ export default function QuizList() {
                             </div>
                         ) : (
                             <div>
-                                {courseQuizzes.map((quiz: any, index: number) => {
+                                {courseQuizzes.map((quiz: any) => {
                                     const status = getAvailabilityStatus(quiz);
                                     const isClosed = status === "Closed";
-                                    const isNotAvailable = status.includes("Not available until");
+                                    // const isNotAvailable = status.includes("Not available until");
                                     
                                     return (
                                         <div 
@@ -279,10 +317,12 @@ export default function QuizList() {
                                         >
                                             <div className="d-flex justify-content-between align-items-start">
                                                 <div className="d-flex">
-                                                    <div className="me-3">
-                                                        <svg className="text-success" width="20" height="20" viewBox="0 0 24 24">
-                                                            <path fill="currentColor" d="M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"></path>
-                                                        </svg>
+                                                    <div className="me-3 mt-1">
+                                                        {/* Replace SVG with Rocket icon */}
+                                                        <FaRocket 
+                                                            className="text-success" 
+                                                            size={18} 
+                                                        />
                                                     </div>
                                                     <div>
                                                         <div className="mb-1">
@@ -293,34 +333,35 @@ export default function QuizList() {
                                                                     handleQuizClick(quiz._id || quiz.id);
                                                                 }}
                                                                 className="text-dark fw-medium text-decoration-none"
+                                                                style={{ fontSize: "15px" }}
                                                             >
                                                                 {quiz.title || "Untitled Quiz"}
                                                             </a>
                                                         </div>
-                                                        <div className="text-secondary small">
-                                                            <span>{status} | </span>
-                                                            <span>Due {formatDate(quiz.dueDate)} | </span>
+                                                        <div className="text-secondary" style={{ fontSize: "13px" }}>
+                                                            {/* Status display */}
+                                                            <span style={{ fontWeight: isClosed ? "bold" : "normal" }}>
+                                                                {status} | 
+                                                            </span>
+                                                            <span> Due {formatDate(quiz.dueDate)} | </span>
                                                             <span>{quiz.points} pts | </span>
                                                             <span>{quiz.questions?.length || 0} Questions</span>
                                                         </div>
                                                     </div>
                                                 </div>
                                                 <div className="d-flex align-items-center">
-                                                    {/* Published status (checkmark) */}
-                                                    <button 
-                                                        className={`btn btn-sm rounded-circle ${quiz.published ? "text-white bg-success" : "text-success border border-success"}`}
+                                                    {/* Published status icon - green checkmark or red prohibition */}
+                                                    <div 
+                                                        style={quiz.published ? publishedIconStyle : unpublishedIconStyle}
                                                         onClick={() => isFaculty && !isClosed && handlePublishToggle(quiz._id, quiz.published)}
-                                                        style={{ 
-                                                            width: "30px", 
-                                                            height: "30px", 
-                                                            padding: 0,
-                                                            opacity: isClosed ? 0.5 : 1,
-                                                            cursor: isFaculty && !isClosed ? 'pointer' : 'default' 
-                                                        }}
-                                                        disabled={isClosed}
+                                                        className={isFaculty && !isClosed ? "cursor-pointer" : ""}
                                                     >
-                                                        <i className="fas fa-check"></i>
-                                                    </button>
+                                                        {quiz.published ? (
+                                                            <FaCheck size={14} />
+                                                        ) : (
+                                                            <FaBan size={14} />
+                                                        )}
+                                                    </div>
                                                     
                                                     {/* Context menu */}
                                                     <div className="ms-2">
@@ -330,7 +371,7 @@ export default function QuizList() {
                                                                 id={`dropdown-${quiz._id}`} 
                                                                 className="text-secondary p-0"
                                                             >
-                                                                <i className="fas fa-ellipsis-v"></i>
+                                                                <FaEllipsisV />
                                                             </Dropdown.Toggle>
                                                             <Dropdown.Menu align="end">
                                                                 <Dropdown.Item onClick={() => handleEditClick(quiz._id)}>Edit</Dropdown.Item>

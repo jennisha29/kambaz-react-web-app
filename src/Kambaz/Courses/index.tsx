@@ -8,6 +8,7 @@ import Details from "./Quizzes/Details"; // Add this import
 import People from "./People";
 import { Navigate, Route, Routes, useParams, useLocation } from "react-router";
 import { useSelector } from "react-redux";
+import QuizEditor from "./Quizzes/QuizEditor";
 
 export default function Courses() {
   const { cid } = useParams();
@@ -41,7 +42,7 @@ export default function Courses() {
                 
                 {/* Quiz routes */}
                 <Route path="Quizzes" element={<QuizList />} />
-                <Route path="Quizzes/new" element={<Details />} />
+                <Route path="Quizzes/new" element={<QuizEditor />} />
                 <Route path="Quizzes/:qid" element={<Details />} />
                 
                 <Route path="Grades" element={<h2>Grades</h2>} />

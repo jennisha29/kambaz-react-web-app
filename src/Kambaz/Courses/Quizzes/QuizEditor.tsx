@@ -1,19 +1,59 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Form, Button, Tabs, Tab } from "react-bootstrap";
-import { useDispatch } from "react-redux"; // Removed useSelector since it's not used
-import { updateQuiz, addQuiz } from "./reducer";
+import { Form, Button, Nav, Dropdown } from "react-bootstrap";
+import { useDispatch } from "react-redux";
+import { addQuiz } from "./reducer";
 import * as client from "./client";
-import { Quiz } from "./client"; // Import the Quiz interface
+import { Quiz } from "./client";
+import { FaLock, FaBan, FaCheck, FaEdit, FaEye } from "react-icons/fa";
+import { BsThreeDotsVertical } from "react-icons/bs";
 
 export default function QuizEditor() {
   const { qid, cid } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-
+  
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("details");
+  const [wordCount, setWordCount] = useState(0);
+
+  const [assignments, setAssignments] = useState([
+    {
+      assignTo: "Everyone",
+      dueDate: "",
+      dueTime: "23:59",
+      availableFromDate: "",
+      availableFromTime: "00:00",
+      availableUntilDate: "",
+      availableUntilTime: "23:59"
+    }
+  ]);
+
+  const handleDateChange = (index: number, field: "dueDate" | "dueTime" | "availableFromDate" | "availableFromTime" | "availableUntilDate" | "availableUntilTime", value: string) => {
+    const updated = [...assignments];
+    updated[index][field] = value;
+    setAssignments(updated);
+  };
+
+  const addAssignmentBlock = () => {
+    setAssignments(prev => [
+      ...prev,
+      {
+        assignTo: "Everyone",
+        dueDate: "",
+        dueTime: "23:59",
+        availableFromDate: "",
+        availableFromTime: "00:00",
+        availableUntilDate: "",
+        availableUntilTime: "23:59"
+      }
+    ]);
+  };
+
+  const removeAssignmentBlock = (index: number) => {
+    setAssignments(prev => prev.filter((_, i) => i !== index));
+  };
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -21,43 +61,42 @@ export default function QuizEditor() {
         try {
           setLoading(true);
           const fetchedQuiz = await client.findQuizById(qid);
+          console.log("Fetched quiz:", fetchedQuiz);
+          setQuiz(fetchedQuiz);
           
-          // Convert string values to boolean for compatibility with server schema
-          const formattedQuiz = {
-            ...fetchedQuiz,
-            shuffleAnswers: typeof fetchedQuiz.shuffleAnswers === 'string' 
-              ? fetchedQuiz.shuffleAnswers === 'Yes' 
-              : fetchedQuiz.shuffleAnswers,
-            multipleAttempts: typeof fetchedQuiz.multipleAttempts === 'string'
-              ? fetchedQuiz.multipleAttempts === 'Yes'
-              : fetchedQuiz.multipleAttempts,
-            showCorrectAnswers: typeof fetchedQuiz.showCorrectAnswers === 'string'
-              ? fetchedQuiz.showCorrectAnswers === 'Immediately'
-              : fetchedQuiz.showCorrectAnswers,
-            oneQuestionAtATime: typeof fetchedQuiz.oneQuestionAtTime === 'string'
-              ? fetchedQuiz.oneQuestionAtTime === 'Yes'
-              : fetchedQuiz.oneQuestionAtATime,
-            webcamRequired: typeof fetchedQuiz.webcamRequired === 'string'
-              ? fetchedQuiz.webcamRequired === 'Yes'
-              : fetchedQuiz.webcamRequired,
-            lockQuestionsAfterAnswering: typeof fetchedQuiz.lockQuestionsAfterAnswering === 'string'
-              ? fetchedQuiz.lockQuestionsAfterAnswering === 'Yes'
-              : fetchedQuiz.lockQuestionsAfterAnswering
+          // Extract time from date fields
+          const extractTimeFromDate = (dateString: string) => {
+            if (!dateString) return "00:00";
+            const date = new Date(dateString);
+            return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
           };
+  
+          // Initialize assignments with date and time data from the fetched quiz
+          setAssignments([{
+            assignTo: "Everyone",
+            dueDate: fetchedQuiz.dueDate ? new Date(fetchedQuiz.dueDate).toISOString().split('T')[0] : "",
+            dueTime: fetchedQuiz.dueDate ? extractTimeFromDate(fetchedQuiz.dueDate) : "23:59",
+            availableFromDate: fetchedQuiz.availableFromDate ? new Date(fetchedQuiz.availableFromDate).toISOString().split('T')[0] : "",
+            availableFromTime: fetchedQuiz.availableFromDate ? extractTimeFromDate(fetchedQuiz.availableFromDate) : "00:00",
+            availableUntilDate: fetchedQuiz.availableUntilDate ? new Date(fetchedQuiz.availableUntilDate).toISOString().split('T')[0] : "",
+            availableUntilTime: fetchedQuiz.availableUntilDate ? extractTimeFromDate(fetchedQuiz.availableUntilDate) : "23:59"
+          }]);
           
-          setQuiz(formattedQuiz);
+          const words = fetchedQuiz.description ? 
+            fetchedQuiz.description.trim().split(/\s+/).filter((w: string) => w.length > 0) : 
+            [];
+          setWordCount(words.length);
           setLoading(false);
         } catch (error) {
           console.error("Error fetching quiz:", error);
           setLoading(false);
         }
-      } else if (qid === "new") {
-        // Set default values for a new quiz with boolean values
-        setQuiz({
-          title: "New Quiz",
+      } else {
+        const newQuiz = {
+          title: "Unnamed Quiz",
           description: "",
           quizType: "Graded Quiz",
-          points: 100,
+          points: 0,
           assignmentGroup: "Quizzes",
           shuffleAnswers: true,
           timeLimit: 20,
@@ -68,330 +107,468 @@ export default function QuizEditor() {
           oneQuestionAtATime: true,
           webcamRequired: false,
           lockQuestionsAfterAnswering: false,
-          dueDate: new Date().toISOString(),
-          availableFromDate: new Date().toISOString(),
-          availableUntilDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          dueDate: "",
+          availableFromDate: "",
+          availableUntilDate: "",
           course: cid || "",
           published: false,
           questions: []
-        });
+        };
+        setQuiz(newQuiz);
+        setWordCount(0);
         setLoading(false);
       }
     };
-    
     fetchQuiz();
   }, [qid, cid]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    
-    // Handle checkbox vs other inputs
-    if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked;
-      setQuiz((prev: Quiz | null) => prev ? { ...prev, [name]: checked } : null);
-    } else {
-      setQuiz((prev: Quiz | null) => prev ? { ...prev, [name]: value } : null);
-    }
-  };
-
-  const saveQuiz = async (publish: boolean = false) => {
+  // This is the key function that needs fixing
+  const saveQuiz = async (publish = false) => {
     if (!quiz) return;
-    
     try {
-      const quizToSave = {
-        ...quiz,
-        published: publish || quiz.published
+      // Get assignment dates
+      const firstAssignment = assignments[0];
+
+          const combineDateTime = (date: string, time: string) => {
+      if (!date) return "";
+      // Create date object in local timezone to avoid timezone shifts
+      const [year, month, day] = date.split('-').map(num => parseInt(num));
+      const [hours, minutes] = time.split(':').map(num => parseInt(num));
+      const dateObj = new Date(year, month - 1, day, hours, minutes);
+      return dateObj.toISOString();
+    };
+      
+      // Format dates
+      const dueDate = combineDateTime(firstAssignment.dueDate, firstAssignment.dueTime || "23:59");
+      const availableFromDate = combineDateTime(
+        firstAssignment.availableFromDate, 
+        firstAssignment.availableFromTime || "00:00"
+      );
+      const availableUntilDate = combineDateTime(
+        firstAssignment.availableUntilDate, 
+        firstAssignment.availableUntilTime || "23:59"
+      );
+      
+      // Create quiz data WITHOUT _id field (crucial for new quiz creation)
+      const newQuizData = {
+        title: quiz.title,
+        description: quiz.description || "",
+        quizType: quiz.quizType,
+        points: quiz.points,
+        assignmentGroup: quiz.assignmentGroup,
+        shuffleAnswers: quiz.shuffleAnswers,
+        timeLimit: quiz.timeLimit,
+        multipleAttempts: quiz.multipleAttempts,
+        attempts: quiz.attempts,
+        showCorrectAnswers: quiz.showCorrectAnswers,
+        accessCode: quiz.accessCode || "",
+        oneQuestionAtATime: quiz.oneQuestionAtATime,
+        webcamRequired: quiz.webcamRequired,
+        lockQuestionsAfterAnswering: quiz.lockQuestionsAfterAnswering,
+        dueDate,
+        availableFromDate,
+        availableUntilDate,
+        course: cid || "",
+        published: publish || quiz.published,
+        questions: quiz.questions || []
       };
       
-      let savedQuiz;
-      if (qid === "new") {
-        savedQuiz = await client.createQuiz(cid as string, quizToSave);
-        dispatch(addQuiz(savedQuiz));
-      } else {
-        savedQuiz = await client.updateQuiz(quizToSave);
-        dispatch(updateQuiz(savedQuiz));
+      console.log("Creating new quiz with data:", JSON.stringify(newQuizData, null, 2));
+      
+      // Call the createQuiz function
+      const savedQuiz = await client.createQuiz(cid as string, newQuizData);
+      console.log("New quiz created:", savedQuiz);
+      
+      // Update redux store
+      dispatch(addQuiz(savedQuiz));
+      
+      // Show success message
+      alert("Quiz created successfully!");
+      
+      // Navigate back to quiz list
+      navigate(`/Kambaz/Courses/${cid}/Quizzes`);
+    } catch (error: any) {
+      console.error("Error creating quiz:", error);
+      
+      // Show detailed error
+      let errorMessage = "Failed to create quiz. Please try again.";
+      
+      if (error && typeof error === 'object') {
+        if ('response' in error && error.response && typeof error.response === 'object') {
+          const response = error.response as { data?: any; status?: number };
+          
+          console.error("Server response:", response.data);
+          console.error("Status code:", response.status);
+          
+          if (response.data && typeof response.data === 'object' && 'message' in response.data) {
+            errorMessage = String(response.data.message);
+          }
+        } else if ('message' in error && error.message) {
+          errorMessage = String(error.message);
+        }
       }
       
-      if (publish) {
-        navigate(`/Kambaz/Courses/${cid}/Quizzes`);
-      } else {
-        navigate(`/Kambaz/Courses/${cid}/Quizzes/${savedQuiz._id}`);
-      }
-    } catch (error) {
-      console.error("Error saving quiz:", error);
-      alert("Failed to save quiz. Please try again.");
+      alert(errorMessage);
     }
   };
 
-  const handleCancel = () => {
-    navigate(`/Kambaz/Courses/${cid}/Quizzes`);
+  const handleCancel = () => navigate(`/Kambaz/Courses/${cid}/Quizzes`);
+
+  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const text = e.target.value;
+    const words = text.trim().split(/\s+/).filter(w => w.length > 0);
+    setWordCount(words.length);
+    setQuiz(prev => prev ? { ...prev, description: text } : null);
+  };
+  
+  const calculateTotalPoints = () => {
+    if (!quiz?.questions?.length) return 0;
+    return quiz.questions.reduce((sum, q) => sum + (q.points || 0), 0);
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!quiz) {
-    return <div>Quiz not found.</div>;
-  }
+  if (loading) return <div>Loading quiz editor...</div>;
+  if (!quiz) return <div>Quiz not found</div>;
 
   return (
-    <div className="container mt-4">
-      <h2>{qid === "new" ? "Create New Quiz" : `Edit Quiz: ${quiz.title}`}</h2>
-      
-      <Tabs
-        activeKey={activeTab}
-        onSelect={(k) => setActiveTab(k || "details")}
-        className="mb-4"
-      >
-        <Tab eventKey="details" title="Details">
+    <div className="container-fluid px-0">
+      {/* Header with Points and Published status */}
+      <div className="d-flex justify-content-end align-items-center mb-2 px-3">
+        <span className="text-secondary me-3">Points {calculateTotalPoints()}</span>
+        <div className="d-flex align-items-center me-3">
+          {quiz.published ? (
+            <FaCheck className="me-2 text-success" />
+          ) : (
+            <FaBan className="me-2 text-secondary" />
+          )}
+          <span className="text-secondary">
+            {quiz.published ? "Published" : "Not Published"}
+          </span>
+        </div>
+        <Dropdown>
+          <Dropdown.Toggle variant="light" className="border" id="dropdown-options">
+            <BsThreeDotsVertical />
+          </Dropdown.Toggle>
+          <Dropdown.Menu align="end">
+            <Dropdown.Item><FaEdit className="me-2" /> Edit Title</Dropdown.Item>
+            <Dropdown.Item onClick={() => saveQuiz(true)}><FaCheck className="me-2" /> Publish</Dropdown.Item>
+            <Dropdown.Item><FaEye className="me-2" /> Preview</Dropdown.Item>
+            <Dropdown.Divider />
+            <Dropdown.Item><FaLock className="me-2" /> Lock Quiz</Dropdown.Item>
+          </Dropdown.Menu>
+        </Dropdown>
+      </div>
+
+      {/* Tabs */}
+      <Nav variant="tabs" className="mb-3 border-bottom">
+        <Nav.Item>
+          <Nav.Link 
+            active={activeTab === 'details'} 
+            onClick={() => setActiveTab('details')}
+            className={activeTab === 'details' ? "text-danger border-top border-start border-end" : ""}
+          >
+            Details
+          </Nav.Link>
+        </Nav.Item>
+        <Nav.Item>
+          <Nav.Link 
+            active={activeTab === 'questions'} 
+            onClick={() => setActiveTab('questions')}
+            className={activeTab === 'questions' ? "text-danger border-top border-start border-end" : ""}
+          >
+            Questions
+          </Nav.Link>
+        </Nav.Item>
+      </Nav>
+
+      {activeTab === 'details' && (
+        <div className="px-3">
           <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Title</Form.Label>
+            {/* Title field */}
+            <Form.Group className="mb-4">
               <Form.Control
                 type="text"
-                name="title"
+                placeholder="Unnamed Quiz"
                 value={quiz.title || ""}
-                onChange={handleInputChange}
-                placeholder="Quiz Title"
+                onChange={(e) => setQuiz({...quiz, title: e.target.value})}
+                className="p-2 border"
               />
             </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Description</Form.Label>
+            <Form.Group className="mb-4">
+              <h5 className="mb-3">Quiz Instructions:</h5>
               <Form.Control
-                as="textarea"
-                name="description"
-                value={quiz.description || ""}
-                onChange={handleInputChange}
-                placeholder="Quiz Description"
-                rows={3}
+              as="textarea"
+              rows={5}
+              value={quiz.description || ""}
+              onChange={handleDescriptionChange}
+              className="border"
               />
+              <div className="text-end">
+                <small className="text-muted ms-2">{wordCount} words</small>
+              </div>
             </Form.Group>
             
-            <Form.Group className="mb-3">
-              <Form.Label>Quiz Type</Form.Label>
-              <Form.Select 
-                name="quizType" 
-                value={quiz.quizType || "Graded Quiz"}
-                onChange={handleInputChange}
-              >
-                <option value="Graded Quiz">Graded Quiz</option>
-                <option value="Practice Quiz">Practice Quiz</option>
-                <option value="Graded Survey">Graded Survey</option>
-                <option value="Ungraded Survey">Ungraded Survey</option>
-              </Form.Select>
-            </Form.Group>
+            <div className="row mb-4 align-items-center">
+              <div className="col-md-4">
+                <Form.Label className="pt-2">Quiz Type</Form.Label>
+                <Form.Select
+                value={quiz.quizType}
+                onChange={(e) => setQuiz({ ...quiz, quizType: e.target.value })}
+                >
+                  <option value="Graded Quiz">Graded Quiz</option>
+                  <option value="Practice Quiz">Practice Quiz</option>
+                  <option value="Graded Survey">Graded Survey</option>
+                  <option value="Ungraded Survey">Ungraded Survey</option>
+                </Form.Select>
+              </div>
+              <div className="col-md-4">
+                <Form.Label className="pt-2">Assignment Group</Form.Label>
+                <Form.Select
+                  value={quiz.assignmentGroup}
+                  onChange={(e) => setQuiz({ ...quiz, assignmentGroup: e.target.value })}
+                >
+                  <option value="Quizzes">Quizzes</option>
+                  <option value="ASSIGNMENTS">ASSIGNMENTS</option>
+                  <option value="Exams">Exams</option>
+                  <option value="Project">Project</option>
+                </Form.Select>
+              </div>
+            </div>
             
-            <Form.Group className="mb-3">
-              <Form.Label>Assignment Group</Form.Label>
-              <Form.Select 
-                name="assignmentGroup" 
-                value={quiz.assignmentGroup || "Quizzes"}
-                onChange={handleInputChange}
-              >
-                <option value="Quizzes">Quizzes</option>
-                <option value="Exams">Exams</option>
-                <option value="Assignments">Assignments</option>
-                <option value="Project">Project</option>
-              </Form.Select>
-            </Form.Group>
+            {/* Options section */}
+            <h5 className="mb-3">Options</h5>
             
-            <Form.Group className="mb-3">
-              <Form.Check 
+            <div className="ms-4 mb-3">
+              <Form.Check
                 type="checkbox"
+                id="shuffle-answers"
                 label="Shuffle Answers"
-                name="shuffleAnswers"
                 checked={quiz.shuffleAnswers}
-                onChange={handleInputChange}
+                onChange={(e) => setQuiz({...quiz, shuffleAnswers: e.target.checked})}
               />
-            </Form.Group>
+            </div>
             
-            <Form.Group className="mb-3">
-              <Form.Label>Time Limit (minutes)</Form.Label>
-              <Form.Control
-                type="number"
-                name="timeLimit"
-                value={quiz.timeLimit || 20}
-                onChange={handleInputChange}
-                min={0}
-              />
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Check 
+            <div className="ms-4 mb-3">
+              <Form.Check
                 type="checkbox"
-                label="Multiple Attempts"
-                name="multipleAttempts"
+                id="time-limit"
+                label="Time Limit"
+                checked={quiz.timeLimit !== undefined}
+                onChange={(e) => setQuiz({...quiz, timeLimit: e.target.checked ? 20 : undefined})}
+                className="mb-2"
+              />
+              
+              {quiz.timeLimit !== undefined && (
+                <div className="d-flex align-items-center ms-4">
+                  <Form.Control
+                    type="number"
+                    value={quiz.timeLimit}
+                    onChange={(e) => setQuiz({...quiz, timeLimit: parseInt(e.target.value)})}
+                    style={{width: "80px"}}
+                    className="me-2"
+                  />
+                  <span>Minutes</span>
+                </div>
+              )}
+            </div>
+            
+            <div className="ms-4 mb-3 border rounded p-2">
+              <Form.Check
+                type="checkbox"
+                id="multiple-attempts"
+                label="Allow Multiple Attempts"
                 checked={quiz.multipleAttempts}
-                onChange={handleInputChange}
+                onChange={(e) => setQuiz({...quiz, multipleAttempts: e.target.checked})}
               />
-            </Form.Group>
+              
+              {/* Show attempts field when multiple attempts is enabled */}
+              {quiz.multipleAttempts && (
+                <div className="mt-2 ms-4">
+                  <Form.Group>
+                    <Form.Label>Number of Attempts</Form.Label>
+                    <Form.Control
+                      type="number"
+                      min="1"
+                      value={quiz.attempts || 1}
+                      onChange={(e) => setQuiz({...quiz, attempts: parseInt(e.target.value)})}
+                      style={{maxWidth: "100px"}}
+                    />
+                  </Form.Group>
+                </div>
+              )}
+            </div>
             
-            {quiz.multipleAttempts && (
-              <Form.Group className="mb-3">
-                <Form.Label>Number of Attempts</Form.Label>
-                <Form.Control
-                  type="number"
-                  name="attempts"
-                  value={quiz.attempts || 1}
-                  onChange={handleInputChange}
-                  min={1}
-                />
-              </Form.Group>
-            )}
-            
-            <Form.Group className="mb-3">
-              <Form.Check 
+            <div className="ms-4 mb-3">
+              <Form.Check
                 type="checkbox"
+                id="show-correct"
                 label="Show Correct Answers"
-                name="showCorrectAnswers"
                 checked={quiz.showCorrectAnswers}
-                onChange={handleInputChange}
+                onChange={(e) => setQuiz({...quiz, showCorrectAnswers: e.target.checked})}
               />
-            </Form.Group>
+            </div>
             
-            <Form.Group className="mb-3">
-              <Form.Label>Access Code (Optional)</Form.Label>
-              <Form.Control
-                type="text"
-                name="accessCode"
-                value={quiz.accessCode || ""}
-                onChange={handleInputChange}
-                placeholder="Leave blank for no access code"
-              />
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Check 
+            <div className="ms-4 mb-3">
+              <Form.Check
                 type="checkbox"
+                id="one-question"
                 label="One Question at a Time"
-                name="oneQuestionAtATime"
                 checked={quiz.oneQuestionAtATime}
-                onChange={handleInputChange}
+                onChange={(e) => setQuiz({...quiz, oneQuestionAtATime: e.target.checked})}
               />
-            </Form.Group>
+            </div>
             
-            <Form.Group className="mb-3">
-              <Form.Check 
+            <div className="ms-4 mb-3">
+              <Form.Check
                 type="checkbox"
+                id="webcam"
                 label="Webcam Required"
-                name="webcamRequired"
                 checked={quiz.webcamRequired}
-                onChange={handleInputChange}
+                onChange={(e) => setQuiz({...quiz, webcamRequired: e.target.checked})}
               />
-            </Form.Group>
+            </div>
             
-            <Form.Group className="mb-3">
-              <Form.Check 
+            <div className="ms-4 mb-4">
+              <Form.Check
                 type="checkbox"
+                id="lock-questions"
                 label="Lock Questions After Answering"
-                name="lockQuestionsAfterAnswering"
                 checked={quiz.lockQuestionsAfterAnswering}
-                onChange={handleInputChange}
+                onChange={(e) => setQuiz({...quiz, lockQuestionsAfterAnswering: e.target.checked})}
               />
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Due Date</Form.Label>
+            </div>
+
+            {/* Assign section */}
+            <h5 className="mb-3">Assign</h5>
+
+<div className="border rounded mb-4">
+  {assignments.map((a, index) => (
+    <div key={index} className="p-3 border-bottom">
+      <h6 className="mb-3">Assign to</h6>
+      <div className="mb-3 p-2 border rounded bg-light d-flex justify-content-between">
+        <span>{a.assignTo}</span>
+        {index > 0 && (
+          <button
+            type="button"
+            className="btn btn-sm text-secondary"
+            onClick={() => removeAssignmentBlock(index)}
+          >×</button>
+        )}
+      </div>
+      <Form.Group className="mb-3">
+        <Form.Label>Due</Form.Label>
+        <div className="d-flex">
+          <Form.Control
+            type="date"
+            value={a.dueDate}
+            onChange={(e) => handleDateChange(index, "dueDate", e.target.value)}
+            className="me-2"
+          />
+          <Form.Control
+            type="time"
+            value={a.dueTime}
+            onChange={(e) => handleDateChange(index, "dueTime", e.target.value)}
+          />
+        </div>
+      </Form.Group>
+      <div className="row">
+        <div className="col-md-6">
+          <Form.Group>
+            <Form.Label>Available from</Form.Label>
+            <div className="d-flex">
               <Form.Control
-                type="datetime-local"
-                name="dueDate"
-                value={formatDateForInput(quiz.dueDate)}
-                onChange={handleInputChange}
+                type="date"
+                value={a.availableFromDate}
+                onChange={(e) => handleDateChange(index, "availableFromDate", e.target.value)}
+                className="me-2"
               />
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Available From Date</Form.Label>
               <Form.Control
-                type="datetime-local"
-                name="availableFromDate"
-                value={formatDateForInput(quiz.availableFromDate)}
-                onChange={handleInputChange}
+                type="time"
+                value={a.availableFromTime}
+                onChange={(e) => handleDateChange(index, "availableFromTime", e.target.value)}
               />
-            </Form.Group>
-            
-            <Form.Group className="mb-3">
-              <Form.Label>Available Until Date</Form.Label>
+            </div>
+          </Form.Group>
+        </div>
+        <div className="col-md-6">
+          <Form.Group>
+            <Form.Label>Until</Form.Label>
+            <div className="d-flex">
               <Form.Control
-                type="datetime-local"
-                name="availableUntilDate"
-                value={formatDateForInput(quiz.availableUntilDate)}
-                onChange={handleInputChange}
+                type="date"
+                value={a.availableUntilDate}
+                onChange={(e) => handleDateChange(index, "availableUntilDate", e.target.value)}
+                className="me-2"
               />
-            </Form.Group>
+              <Form.Control
+                type="time"
+                value={a.availableUntilTime}
+                onChange={(e) => handleDateChange(index, "availableUntilTime", e.target.value)}
+              />
+            </div>
+          </Form.Group>
+        </div>
+      </div>
+    </div>
+  ))}
+              <div className="border-top p-2 bg-light text-center">
+                <Button 
+                  variant="light" 
+                  className="border" 
+                  size="sm" 
+                  onClick={addAssignmentBlock}
+                  type="button" // Prevent form submission
+                >
+                  <span className="me-1">+</span> Add
+                </Button>
+              </div>
+            </div>
             
-            <div className="d-flex gap-2 justify-content-end mt-4">
-              <Button variant="secondary" onClick={handleCancel}>
+            <hr />
+            
+            {/* Buttons */}
+            <div className="d-flex justify-content-center mt-4 mb-5">
+              <Button 
+                variant="light" 
+                className="border me-2" 
+                onClick={handleCancel}
+                type="button" // Prevent form submission
+              >
                 Cancel
               </Button>
-              <Button variant="success" onClick={() => saveQuiz()}>
+              <Button 
+                variant="danger" 
+                onClick={() => saveQuiz(false)}
+                type="button" // Prevent form submission
+              >
                 Save
-              </Button>
-              <Button variant="primary" onClick={() => saveQuiz(true)}>
-                Save & Publish
               </Button>
             </div>
           </Form>
-        </Tab>
-        
-        <Tab eventKey="questions" title="Questions">
-          <div className="p-4">
-            <h3>Quiz Questions</h3>
-            
-            {quiz.questions && quiz.questions.length > 0 ? (
-              <div>
-                {quiz.questions.map((question, index) => (
-                  <div key={question._id || index} className="card mb-3">
-                    <div className="card-header d-flex justify-content-between">
-                      <span>Question {index + 1}</span>
-                      <span>{question.points} pts</span>
-                    </div>
-                    <div className="card-body">
-                      <h5>{question.title}</h5>
-                      <p>{question.questionText}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="alert alert-info">
-                No questions added yet. Click "Add Question" to create your first question.
-              </div>
-            )}
-            
-            <Button variant="primary" className="mt-3">
-              Add Question
-            </Button>
-            
-            <div className="d-flex gap-2 justify-content-end mt-4">
-              <Button variant="secondary" onClick={handleCancel}>
-                Cancel
-              </Button>
-              <Button variant="success" onClick={() => saveQuiz()}>
-                Save
-              </Button>
-              <Button variant="primary" onClick={() => saveQuiz(true)}>
-                Save & Publish
-              </Button>
-            </div>
+        </div>
+      )}
+      
+      {activeTab === 'questions' && (
+        <div className="px-3">
+          <div className="alert alert-info">
+            No questions added yet. Click "Add Question" to create your first question.
           </div>
-        </Tab>
-      </Tabs>
+          
+          <Button variant="primary" className="mt-3" type="button">
+            Add Question
+          </Button>
+          
+          <hr />
+          
+          <div className="d-flex justify-content-center mt-4 mb-5">
+            <Button variant="light" className="border me-2" onClick={handleCancel} type="button">
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={() => saveQuiz(false)} type="button">
+              Save
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
-// Helper function to format dates for input elements
-const formatDateForInput = (dateString?: string): string => {
-  if (!dateString) return "";
-  
-  try {
-    const date = new Date(dateString);
-    return date.toISOString().slice(0, 16); // Format YYYY-MM-DDTHH:MM
-  } catch (error) {
-    console.error("Error formatting date for input:", error);
-    return "";
-  }
-};

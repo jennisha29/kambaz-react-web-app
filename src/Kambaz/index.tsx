@@ -200,43 +200,37 @@ export default function Kambaz() {
                 </ProtectedRoute>
               }
             />
-
-            {/* Quiz routes */}
-            {/* <Route
-              path="/Courses/:cid/Quizzes"
-              element={
-                <ProtectedRoute requiresEnrollment={true}>
-                  <QuizList />
-                </ProtectedRoute>
-              }
-            />
             <Route
-              path="/Courses/:cid/Quizzes/new"
-              element={
-                <ProtectedRoute requiresEnrollment={true}>
-                  <QuizEditor />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/Courses/:cid/Quizzes/:qid"
-              element={
-                <ProtectedRoute requiresEnrollment={true}>
-                  <Details />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-            path="/Courses/:cid/Quizzes/:qid/edit"
+            path="/Kambaz/Courses/:cid/Quizzes"
             element={
             <ProtectedRoute requiresEnrollment={true}>
-              <QuizEditor />
-              <div className="p-4">
-                <h2>Quiz Editor Test</h2>
-                <p>This is a test to see if the route is working correctly.</p>
-              </div>
+              <QuizList />
             </ProtectedRoute>
-          }/> */}
+          }/>
+          
+          <Route
+          path="/Kambaz/Courses/:cid/Quizzes/new"
+          element={
+          <ProtectedRoute requiresEnrollment={true}>
+            <QuizEditor />
+          </ProtectedRoute>
+        }/>
+        
+         <Route
+          path="/Kambaz/Courses/:cid/Quizzes/:qid"
+        element={
+        <ProtectedRoute requiresEnrollment={true}>
+          <Details />
+        </ProtectedRoute> } />
+        
+        <Route
+        path="/Kambaz/Courses/:cid/Quizzes/:qid/edit"
+        element={
+        <ProtectedRoute requiresEnrollment={true}>
+          <QuizEditor />
+        </ProtectedRoute>
+      }
+      />
             
             <Route
               path="/Enrollments"
