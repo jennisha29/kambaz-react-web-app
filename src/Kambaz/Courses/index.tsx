@@ -9,6 +9,7 @@ import People from "./People";
 import { Navigate, Route, Routes, useParams, useLocation } from "react-router";
 import { useSelector } from "react-redux";
 import QuizEditor from "./Quizzes/QuizEditor";
+import QuizQuestionsEditor from "./Quizzes/QuizQuestionsEditor";
 
 export default function Courses() {
   const { cid } = useParams();
@@ -45,6 +46,7 @@ export default function Courses() {
                 <Route path="Quizzes/new" element={<QuizEditor />} />
                 <Route path="Quizzes/:qid" element={<Details />} />
                 <Route path="Quizzes/:qid/edit" element={<QuizEditor />} />
+                <Route path="Quizzes/:qid/questions" element={<QuizQuestionsEditor />} />
                 <Route path="Grades" element={<h2>Grades</h2>} />
                 <Route path="People" element={<People />} />
             </Routes>

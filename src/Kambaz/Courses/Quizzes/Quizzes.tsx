@@ -4,7 +4,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { setQuizzes, deleteQuiz, setQuizPublished } from "./reducer";
 import { Dropdown } from "react-bootstrap";
 import * as client from "./client";
-import CourseNavigation from "../Navigation"; // Import the existing CourseNavigation component
+import CourseNavigation from "../Navigation";
 
 export default function QuizList() {
     const { cid } = useParams();
@@ -19,8 +19,6 @@ export default function QuizList() {
     
     const { currentUser } = useSelector((state: any) => state.accountReducer || {});
     const isFaculty = currentUser && currentUser.role === "FACULTY";
-    
-    // Get course information
     const { courses } = useSelector((state: any) => state.coursesReducer || { courses: [] });
     const course = useMemo(() => courses.find((c: any) => c._id === cid), [courses, cid]);
     const courseName = course?.name || "Course";
@@ -68,8 +66,6 @@ export default function QuizList() {
         console.log(`Filtering for course ID: "${cid}" (${typeof cid})`);
         
         const filtered = allQuizzes.filter((q: any) => String(q.course) === String(cid));
-        
-        // Apply search filtering if search query exists
         const searchFiltered = searchQuery 
             ? filtered.filter((q: any) => 
                 q.title?.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -137,7 +133,7 @@ export default function QuizList() {
             console.log(`${isPublished ? 'Unpublishing' : 'Publishing'} quiz:`, quizId);
             await client.publishQuiz(quizId, !isPublished);
             dispatch(setQuizPublished({ quizId, published: !isPublished }));
-            fetchQuizzes(); // Refresh to ensure UI is up-to-date
+            fetchQuizzes();
         } catch (error) {
             console.error(`Error ${isPublished ? 'unpublishing' : 'publishing'} quiz:`, error);
         }
@@ -147,7 +143,6 @@ export default function QuizList() {
         navigate(`/Kambaz/Courses/${cid}/Quizzes/new`);
     };
 
-    // Check if a quiz is available based on dates
     const getAvailabilityStatus = (quiz: any) => {
         const now = new Date();
         const availableFrom = quiz.availableFromDate ? new Date(quiz.availableFromDate) : null;
@@ -170,7 +165,6 @@ export default function QuizList() {
     
     return (
         <div>
-            {/* Course-specific header */}
             <div>
                 <h2 className="text-danger m-0">
                     {courseName} &gt; Quizzes
@@ -180,21 +174,16 @@ export default function QuizList() {
             <hr className="mt-2 mb-3" />
             
             <div className="row">
-                {/* Left Navigation - Using existing CourseNavigation component */}
                 <div className="col-md-2 d-none d-md-block">
                     <CourseNavigation />
                 </div>
                 
-                {/* Main Content */}
                 <div className="col-md-10 ps-0">
-                    {/* Student View button */}
                     <div className="d-flex justify-content-end mb-3">
                         <button className="btn btn-outline-secondary">
                             <i className="fas fa-user"></i> Student View
                         </button>
                     </div>
-                    
-                    {/* Search and Add Quiz controls */}
                     <div className="d-flex justify-content-between align-items-center my-3 ms-0">
                         <div>
                             <input
@@ -219,17 +208,13 @@ export default function QuizList() {
                         </div>
                     </div>
                     
-                    {/* Quizzes Container */}
                     <div className="border rounded">
-                        {/* Quizzes Header */}
                         <div className="p-2 d-flex justify-content-between align-items-center bg-light border-bottom">
                             <div className="d-flex align-items-center">
                                 <span className="me-1">▾</span>
                                 <span className="fw-bold">Assignment Quizzes</span>
                             </div>
                         </div>
-                        
-                        {/* Empty State or Quiz List */}
                         {courseQuizzes.length === 0 ? (
                             <div className="p-4 text-center text-muted">
                                 <div>No quizzes found for this course.</div>
@@ -278,7 +263,6 @@ export default function QuizList() {
                                                 </div>
                                             </div>
                                             <div className="d-flex align-items-center">
-                                                {/* Published status (checkmark) */}
                                                 <span 
                                                     className={`me-3 fs-5 ${quiz.published ? "text-success" : "text-danger"}`}
                                                     onClick={() => isFaculty && handlePublishToggle(quiz._id, quiz.published)}
@@ -287,7 +271,6 @@ export default function QuizList() {
                                                     {quiz.published ? "✓" : "🚫"}
                                                 </span>
                                                 
-                                                {/* Context menu */}
                                                 <Dropdown>
                                                     <Dropdown.Toggle variant="link" id={`dropdown-${quiz._id}`} className="text-secondary p-0">
                                                         <i className="fas fa-ellipsis-v"></i>
@@ -311,7 +294,6 @@ export default function QuizList() {
                 </div>
             </div>
             
-            {/* Delete Confirmation Modal */}
             {showDeleteModal && (
                 <div className="modal fade show" style={{ display: 'block' }} tabIndex={-1}>
                     <div className="modal-dialog modal-dialog-centered">

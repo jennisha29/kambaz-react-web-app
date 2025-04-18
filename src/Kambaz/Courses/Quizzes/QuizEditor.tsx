@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Form, Button, Nav, Dropdown } from "react-bootstrap";
-import { useDispatch } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { addQuiz, updateQuiz } from "./reducer";
 import * as client from "./client";
 import { Quiz } from "./client";
@@ -12,8 +12,9 @@ export default function QuizEditor() {
   const { qid, cid } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { currentUser } = useSelector((state: any) => state.accountReducer || {});
+  const isFaculty = currentUser && currentUser.role === "FACULTY";
   
-  // Determine if we're editing an existing quiz or creating a new one
   const isNewQuiz = !qid || qid === "new";
   
   const [quiz, setQuiz] = useState<Quiz | null>(null);
@@ -32,6 +33,13 @@ export default function QuizEditor() {
       availableUntilTime: "23:59"
     }
   ]);
+
+  useEffect(() => {
+    if (!isFaculty) {
+      alert("Only faculty members can create or edit quizzes.");
+      navigate(`/Kambaz/Courses/${cid}/Quizzes`);
+    }
+  }, [isFaculty, navigate, cid]);
 
   const handleDateChange = (index: number, field: "dueDate" | "dueTime" | "availableFromDate" | "availableFromTime" | "availableUntilDate" | "availableUntilTime", value: string) => {
     const updated = [...assignments];
@@ -64,17 +72,15 @@ export default function QuizEditor() {
         try {
           setLoading(true);
           const fetchedQuiz = await client.findQuizById(qid);
-          console.log("Fetched quiz:", fetchedQuiz);
+          // console.log("Fetched quiz:", fetchedQuiz);
           setQuiz(fetchedQuiz);
           
-          // Extract time from date fields
           const extractTimeFromDate = (dateString: string) => {
             if (!dateString) return "00:00";
             const date = new Date(dateString);
             return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
           };
   
-          // Initialize assignments with date and time data from the fetched quiz
           setAssignments([{
             assignTo: "Everyone",
             dueDate: fetchedQuiz.dueDate ? new Date(fetchedQuiz.dueDate).toISOString().split('T')[0] : "",
@@ -122,26 +128,31 @@ export default function QuizEditor() {
         setLoading(false);
       }
     };
-    fetchQuiz();
-  }, [qid, cid]);
+    
+    if (isFaculty) {
+      fetchQuiz();
+    }
+  }, [qid, cid, isFaculty]);
 
-  // Updated saveQuiz function to handle both create and update
   const saveQuiz = async (publish = false) => {
     if (!quiz) return;
+    
+    if (!isFaculty) {
+      alert("Only faculty members can save quizzes.");
+      return;
+    }
+    
     try {
-      // Get assignment dates
       const firstAssignment = assignments[0];
 
       const combineDateTime = (date: string, time: string) => {
         if (!date) return "";
-        // Create date object in local timezone to avoid timezone shifts
         const [year, month, day] = date.split('-').map(num => parseInt(num));
         const [hours, minutes] = time.split(':').map(num => parseInt(num));
         const dateObj = new Date(year, month - 1, day, hours, minutes);
         return dateObj.toISOString();
       };
       
-      // Format dates
       const dueDate = combineDateTime(firstAssignment.dueDate, firstAssignment.dueTime || "23:59");
       const availableFromDate = combineDateTime(
         firstAssignment.availableFromDate, 
@@ -152,7 +163,6 @@ export default function QuizEditor() {
         firstAssignment.availableUntilTime || "23:59"
       );
       
-      // Create quiz data
       const quizData = {
         title: quiz.title,
         description: quiz.description || "",
@@ -176,46 +186,33 @@ export default function QuizEditor() {
         questions: quiz.questions || []
       };
       
-      // If editing an existing quiz
       if (!isNewQuiz) {
-        // Include the _id field for updates
         const quizToUpdate = {
           ...quizData,
           _id: qid
         };
         
-        console.log("Updating quiz with data:", JSON.stringify(quizToUpdate, null, 2));
+        // console.log("Updating quiz with data:", JSON.stringify(quizToUpdate, null, 2));
         
-        // Call the updateQuiz function
         const updatedQuiz = await client.updateQuiz(quizToUpdate);
-        console.log("Quiz updated:", updatedQuiz);
+        // console.log("Quiz updated:", updatedQuiz);
         
-        // Update redux store
         dispatch(updateQuiz(updatedQuiz));
-        
-        // Show success message
         alert("Quiz updated successfully!");
       } else {
-        // Creating a new quiz
-        console.log("Creating new quiz with data:", JSON.stringify(quizData, null, 2));
+        // console.log("Creating new quiz with data:", JSON.stringify(quizData, null, 2));
         
-        // Call the createQuiz function
         const savedQuiz = await client.createQuiz(cid as string, quizData);
         console.log("New quiz created:", savedQuiz);
-        
-        // Update redux store
         dispatch(addQuiz(savedQuiz));
         
-        // Show success message
         alert("Quiz created successfully!");
       }
       
-      // Navigate back to quiz list
       navigate(`/Kambaz/Courses/${cid}/Quizzes`);
     } catch (error: any) {
       console.error("Error saving quiz:", error);
       
-      // Show detailed error
       let errorMessage = `Failed to ${isNewQuiz ? 'create' : 'update'} quiz. Please try again.`;
       
       if (error && typeof error === 'object') {
@@ -251,12 +248,15 @@ export default function QuizEditor() {
     return quiz.questions.reduce((sum, q) => sum + (q.points || 0), 0);
   };
 
+  if (!isFaculty) {
+    return null; 
+  }
+
   if (loading) return <div>Loading quiz editor...</div>;
   if (!quiz) return <div>Quiz not found</div>;
 
   return (
     <div className="container-fluid px-0">
-      {/* Header with Points and Published status */}
       <div className="d-flex justify-content-between align-items-center mb-2 px-3">
         <h1 className="mb-0">{isNewQuiz ? "Create Quiz" : "Edit Quiz"}</h1>
         <div className="d-flex align-items-center">
@@ -286,7 +286,6 @@ export default function QuizEditor() {
         </div>
       </div>
 
-      {/* Tabs */}
       <Nav variant="tabs" className="mb-3 border-bottom">
         <Nav.Item>
           <Nav.Link 
@@ -300,8 +299,16 @@ export default function QuizEditor() {
         <Nav.Item>
           <Nav.Link 
             active={activeTab === 'questions'} 
-            onClick={() => setActiveTab('questions')}
-            className={activeTab === 'questions' ? "text-danger border-top border-start border-end" : ""}
+            onClick={() => {
+
+              if (qid && qid !== "new") {
+                navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/questions`);
+              } else {
+
+                alert("Please save the quiz first before adding questions.");
+              }
+            }}
+            className={activeTab === 'questions' ? "text-danger border-top border-start border-end" : "text-secondary"}
           >
             Questions
           </Nav.Link>
@@ -311,7 +318,6 @@ export default function QuizEditor() {
       {activeTab === 'details' && (
         <div className="px-3">
           <Form>
-            {/* Title field */}
             <Form.Group className="mb-4">
               <Form.Control
                 type="text"
@@ -362,7 +368,6 @@ export default function QuizEditor() {
               </div>
             </div>
             
-            {/* Options section */}
             <h5 className="mb-3">Options</h5>
             
             <div className="ms-4 mb-3">
@@ -407,8 +412,7 @@ export default function QuizEditor() {
                 checked={quiz.multipleAttempts}
                 onChange={(e) => setQuiz({...quiz, multipleAttempts: e.target.checked})}
               />
-              
-              {/* Show attempts field when multiple attempts is enabled */}
+
               {quiz.multipleAttempts && (
                 <div className="mt-2 ms-4">
                   <Form.Group>
@@ -465,86 +469,85 @@ export default function QuizEditor() {
               />
             </div>
 
-            {/* Assign section */}
             <h5 className="mb-3">Assign</h5>
 
-<div className="border rounded mb-4">
-  {assignments.map((a, index) => (
-    <div key={index} className="p-3 border-bottom">
-      <h6 className="mb-3">Assign to</h6>
-      <div className="mb-3 p-2 border rounded bg-light d-flex justify-content-between">
-        <span>{a.assignTo}</span>
-        {index > 0 && (
-          <button
-            type="button"
-            className="btn btn-sm text-secondary"
-            onClick={() => removeAssignmentBlock(index)}
-          >×</button>
-        )}
-      </div>
-      <Form.Group className="mb-3">
-        <Form.Label>Due</Form.Label>
-        <div className="d-flex">
-          <Form.Control
-            type="date"
-            value={a.dueDate}
-            onChange={(e) => handleDateChange(index, "dueDate", e.target.value)}
-            className="me-2"
-          />
-          <Form.Control
-            type="time"
-            value={a.dueTime}
-            onChange={(e) => handleDateChange(index, "dueTime", e.target.value)}
-          />
-        </div>
-      </Form.Group>
-      <div className="row">
-        <div className="col-md-6">
-          <Form.Group>
-            <Form.Label>Available from</Form.Label>
-            <div className="d-flex">
-              <Form.Control
-                type="date"
-                value={a.availableFromDate}
-                onChange={(e) => handleDateChange(index, "availableFromDate", e.target.value)}
-                className="me-2"
-              />
-              <Form.Control
-                type="time"
-                value={a.availableFromTime}
-                onChange={(e) => handleDateChange(index, "availableFromTime", e.target.value)}
-              />
-            </div>
-          </Form.Group>
-        </div>
-        <div className="col-md-6">
-          <Form.Group>
-            <Form.Label>Until</Form.Label>
-            <div className="d-flex">
-              <Form.Control
-                type="date"
-                value={a.availableUntilDate}
-                onChange={(e) => handleDateChange(index, "availableUntilDate", e.target.value)}
-                className="me-2"
-              />
-              <Form.Control
-                type="time"
-                value={a.availableUntilTime}
-                onChange={(e) => handleDateChange(index, "availableUntilTime", e.target.value)}
-              />
-            </div>
-          </Form.Group>
-        </div>
-      </div>
-    </div>
-  ))}
+            <div className="border rounded mb-4">
+              {assignments.map((a, index) => (
+                <div key={index} className="p-3 border-bottom">
+                  <h6 className="mb-3">Assign to</h6>
+                  <div className="mb-3 p-2 border rounded bg-light d-flex justify-content-between">
+                    <span>{a.assignTo}</span>
+                    {index > 0 && (
+                      <button
+                        type="button"
+                        className="btn btn-sm text-secondary"
+                        onClick={() => removeAssignmentBlock(index)}
+                      >×</button>
+                    )}
+                  </div>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Due</Form.Label>
+                    <div className="d-flex">
+                      <Form.Control
+                        type="date"
+                        value={a.dueDate}
+                        onChange={(e) => handleDateChange(index, "dueDate", e.target.value)}
+                        className="me-2"
+                      />
+                      <Form.Control
+                        type="time"
+                        value={a.dueTime}
+                        onChange={(e) => handleDateChange(index, "dueTime", e.target.value)}
+                      />
+                    </div>
+                  </Form.Group>
+                  <div className="row">
+                    <div className="col-md-6">
+                      <Form.Group>
+                        <Form.Label>Available from</Form.Label>
+                        <div className="d-flex">
+                          <Form.Control
+                            type="date"
+                            value={a.availableFromDate}
+                            onChange={(e) => handleDateChange(index, "availableFromDate", e.target.value)}
+                            className="me-2"
+                          />
+                          <Form.Control
+                            type="time"
+                            value={a.availableFromTime}
+                            onChange={(e) => handleDateChange(index, "availableFromTime", e.target.value)}
+                          />
+                        </div>
+                      </Form.Group>
+                    </div>
+                    <div className="col-md-6">
+                      <Form.Group>
+                        <Form.Label>Until</Form.Label>
+                        <div className="d-flex">
+                          <Form.Control
+                            type="date"
+                            value={a.availableUntilDate}
+                            onChange={(e) => handleDateChange(index, "availableUntilDate", e.target.value)}
+                            className="me-2"
+                          />
+                          <Form.Control
+                            type="time"
+                            value={a.availableUntilTime}
+                            onChange={(e) => handleDateChange(index, "availableUntilTime", e.target.value)}
+                          />
+                        </div>
+                      </Form.Group>
+                    </div>
+                  </div>
+                </div>
+              ))}
               <div className="border-top p-2 bg-light text-center">
                 <Button 
                   variant="light" 
                   className="border" 
                   size="sm" 
                   onClick={addAssignmentBlock}
-                  type="button" // Prevent form submission
+                  type="button"
                 >
                   <span className="me-1">+</span> Add
                 </Button>
@@ -552,21 +555,20 @@ export default function QuizEditor() {
             </div>
             
             <hr />
-            
-            {/* Buttons */}
+
             <div className="d-flex justify-content-center mt-4 mb-5">
               <Button 
                 variant="light" 
                 className="border me-2" 
                 onClick={handleCancel}
-                type="button" // Prevent form submission
+                type="button"
               >
                 Cancel
               </Button>
               <Button 
                 variant="danger" 
                 onClick={() => saveQuiz(false)}
-                type="button" // Prevent form submission
+                type="button"
               >
                 {isNewQuiz ? "Create" : "Save"}
               </Button>

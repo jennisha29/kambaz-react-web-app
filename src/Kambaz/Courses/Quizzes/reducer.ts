@@ -5,18 +5,23 @@ interface QuizzesState {
   quizzes: Quiz[];
   selectedQuiz: Quiz | null;
   quizAttempts: QuizAttempt[];
+  loading: boolean;
+  error: string | null;
 }
 
-// Try to load initial state from localStorage if available
 const loadInitialState = (): QuizzesState => {
   try {
     const savedQuizzes = localStorage.getItem('quizzes');
+    const savedSelectedQuiz = localStorage.getItem('selectedQuiz');
+    
     if (savedQuizzes) {
       console.log("Loaded quizzes from localStorage");
       return { 
         quizzes: JSON.parse(savedQuizzes),
-        selectedQuiz: null,
-        quizAttempts: []
+        selectedQuiz: savedSelectedQuiz ? JSON.parse(savedSelectedQuiz) : null,
+        quizAttempts: [],
+        loading: false,
+        error: null
       };
     }
   } catch (e) {
@@ -26,7 +31,9 @@ const loadInitialState = (): QuizzesState => {
   return { 
     quizzes: [],
     selectedQuiz: null,
-    quizAttempts: []
+    quizAttempts: [],
+    loading: false,
+    error: null
   };
 };
 
@@ -37,9 +44,19 @@ const quizzesSlice = createSlice({
   name: "quizzes",
   initialState,
   reducers: {
-    // Set all quizzes
+    setLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    
+    setError: (state, action) => {
+      state.error = action.payload;
+      state.loading = false;
+    },
+    
     setQuizzes: (state, action) => {
       state.quizzes = action.payload;
+      state.loading = false;
+      state.error = null;
       
       try {
         localStorage.setItem('quizzes', JSON.stringify(action.payload));
@@ -48,7 +65,6 @@ const quizzesSlice = createSlice({
       }
     },
     
-    // Add a new quiz
     addQuiz: (state, action) => {
       const quizToAdd = {
         ...action.payload,
@@ -56,6 +72,8 @@ const quizzesSlice = createSlice({
       };
       
       state.quizzes = [...state.quizzes, quizToAdd];
+      state.loading = false;
+      state.error = null;
       
       try {
         localStorage.setItem('quizzes', JSON.stringify(state.quizzes));
@@ -65,7 +83,6 @@ const quizzesSlice = createSlice({
       }
     },
     
-    // Update an existing quiz
     updateQuiz: (state, action) => {
       console.log("Updating quiz in Redux:", action.payload);
       const updatedQuiz = {
@@ -79,7 +96,15 @@ const quizzesSlice = createSlice({
       
       if (state.selectedQuiz && state.selectedQuiz._id === updatedQuiz._id) {
         state.selectedQuiz = updatedQuiz;
+        try {
+          localStorage.setItem('selectedQuiz', JSON.stringify(updatedQuiz));
+        } catch (e) {
+          console.error("Failed to save selected quiz to localStorage:", e);
+        }
       }
+      
+      state.loading = false;
+      state.error = null;
       
       console.log("Updated quizzes state after update:", state.quizzes);
       
@@ -90,14 +115,21 @@ const quizzesSlice = createSlice({
       }
     },
     
-    // Delete a quiz
     deleteQuiz: (state, action) => {
       console.log("Deleting quiz from Redux:", action.payload);
       state.quizzes = state.quizzes.filter(quiz => quiz._id !== action.payload);
       
       if (state.selectedQuiz && state.selectedQuiz._id === action.payload) {
         state.selectedQuiz = null;
+        try {
+          localStorage.removeItem('selectedQuiz');
+        } catch (e) {
+          console.error("Failed to remove selected quiz from localStorage:", e);
+        }
       }
+      
+      state.loading = false;
+      state.error = null;
       
       console.log("Updated quizzes state after delete:", state.quizzes);
       
@@ -108,27 +140,35 @@ const quizzesSlice = createSlice({
       }
     },
     
-    // Set the selected quiz
     setSelectedQuiz: (state, action) => {
+      console.log("Setting selected quiz:", action.payload);
       state.selectedQuiz = action.payload;
+      state.error = null;
+      
+      try {
+        if (action.payload) {
+          localStorage.setItem('selectedQuiz', JSON.stringify(action.payload));
+        } else {
+          localStorage.removeItem('selectedQuiz');
+        }
+      } catch (e) {
+        console.error("Failed to save selected quiz to localStorage:", e);
+      }
     },
     
-    // Add a question to a quiz
     addQuestion: (state, action) => {
+      console.log("Adding question to Redux:", action.payload);
       if (state.selectedQuiz) {
         if (!state.selectedQuiz.questions) {
           state.selectedQuiz.questions = [];
         }
         
-        // Add the question to the selected quiz
         state.selectedQuiz.questions.push(action.payload);
         
-        // Update total points for the quiz
         state.selectedQuiz.points = state.selectedQuiz.questions.reduce(
-          (sum, q) => sum + q.points, 0
+          (sum, q) => sum + (Number(q.points) || 0), 0
         );
         
-        // Update the quiz in the quizzes array
         const index = state.quizzes.findIndex(q => q._id === state.selectedQuiz?._id);
         if (index !== -1) {
           state.quizzes[index] = { ...state.selectedQuiz };
@@ -136,16 +176,19 @@ const quizzesSlice = createSlice({
         
         try {
           localStorage.setItem('quizzes', JSON.stringify(state.quizzes));
+          localStorage.setItem('selectedQuiz', JSON.stringify(state.selectedQuiz));
         } catch (e) {
           console.error("Failed to save to localStorage:", e);
         }
       }
+      
+      state.loading = false;
+      state.error = null;
     },
     
-    // Update a question in a quiz
     updateQuestion: (state, action) => {
+      console.log("Updating question in Redux:", action.payload);
       if (state.selectedQuiz && state.selectedQuiz.questions) {
-        // Find and update the question in the selected quiz
         const questionIndex = state.selectedQuiz.questions.findIndex(
           q => q._id === action.payload._id
         );
@@ -153,12 +196,10 @@ const quizzesSlice = createSlice({
         if (questionIndex !== -1) {
           state.selectedQuiz.questions[questionIndex] = action.payload;
           
-          // Update total points for the quiz
           state.selectedQuiz.points = state.selectedQuiz.questions.reduce(
-            (sum, q) => sum + q.points, 0
+            (sum, q) => sum + (Number(q.points) || 0), 0
           );
           
-          // Update the quiz in the quizzes array
           const quizIndex = state.quizzes.findIndex(q => q._id === state.selectedQuiz?._id);
           if (quizIndex !== -1) {
             state.quizzes[quizIndex] = { ...state.selectedQuiz };
@@ -166,27 +207,28 @@ const quizzesSlice = createSlice({
           
           try {
             localStorage.setItem('quizzes', JSON.stringify(state.quizzes));
+            localStorage.setItem('selectedQuiz', JSON.stringify(state.selectedQuiz));
           } catch (e) {
             console.error("Failed to save to localStorage:", e);
           }
         }
       }
+      
+      state.loading = false;
+      state.error = null;
     },
     
-    // Delete a question from a quiz
     deleteQuestion: (state, action) => {
+      console.log("Deleting question from Redux:", action.payload);
       if (state.selectedQuiz && state.selectedQuiz.questions) {
-        // Remove the question from the selected quiz
         state.selectedQuiz.questions = state.selectedQuiz.questions.filter(
           q => q._id !== action.payload
         );
-        
-        // Update total points for the quiz
+
         state.selectedQuiz.points = state.selectedQuiz.questions.reduce(
-          (sum, q) => sum + q.points, 0
+          (sum, q) => sum + (Number(q.points) || 0), 0
         );
         
-        // Update the quiz in the quizzes array
         const quizIndex = state.quizzes.findIndex(q => q._id === state.selectedQuiz?._id);
         if (quizIndex !== -1) {
           state.quizzes[quizIndex] = { ...state.selectedQuiz };
@@ -194,25 +236,32 @@ const quizzesSlice = createSlice({
         
         try {
           localStorage.setItem('quizzes', JSON.stringify(state.quizzes));
+          localStorage.setItem('selectedQuiz', JSON.stringify(state.selectedQuiz));
         } catch (e) {
           console.error("Failed to save to localStorage:", e);
         }
       }
+      
+      state.loading = false;
+      state.error = null;
     },
     
-    // Set quiz publish status
     setQuizPublished: (state, action) => {
       const { quizId, published } = action.payload;
       
-      // Update publish status in quizzes array
       const quizIndex = state.quizzes.findIndex(q => q._id === quizId);
       if (quizIndex !== -1) {
         state.quizzes[quizIndex].published = published;
       }
-      
-      // Update selected quiz if it's the one being published/unpublished
+
       if (state.selectedQuiz && state.selectedQuiz._id === quizId) {
         state.selectedQuiz.published = published;
+        
+        try {
+          localStorage.setItem('selectedQuiz', JSON.stringify(state.selectedQuiz));
+        } catch (e) {
+          console.error("Failed to save selected quiz to localStorage:", e);
+        }
       }
       
       try {
@@ -220,21 +269,28 @@ const quizzesSlice = createSlice({
       } catch (e) {
         console.error("Failed to save to localStorage:", e);
       }
+      
+      state.loading = false;
+      state.error = null;
     },
     
-    // Set quiz attempts
     setQuizAttempts: (state, action) => {
       state.quizAttempts = action.payload;
+      state.loading = false;
+      state.error = null;
     },
     
-    // Add a quiz attempt
     addQuizAttempt: (state, action) => {
       state.quizAttempts.push(action.payload);
+      state.loading = false;
+      state.error = null;
     }
   },
 });
 
 export const {
+  setLoading,
+  setError,
   setQuizzes,
   addQuiz,
   updateQuiz,

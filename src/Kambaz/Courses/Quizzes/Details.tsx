@@ -22,7 +22,7 @@ export default function Details() {
         try {
           setLoading(true);
           const fetchedQuiz = await client.findQuizById(qid);
-          console.log("Quiz data retrieved:", fetchedQuiz);
+          // console.log("Quiz data retrieved:", fetchedQuiz);
           
           if (fetchedQuiz) {
             setQuiz(fetchedQuiz);
@@ -34,7 +34,12 @@ export default function Details() {
           setLoading(false);
         }
       } else if (qid === "new") {
-        // Set default values for a new quiz
+        if (!isFaculty) {
+          alert("Only faculty members can create quizzes.");
+          navigate(`/Kambaz/Courses/${cid}/Quizzes`);
+          return;
+        }
+        
         setQuiz({
           title: "New Quiz",
           quizType: "Graded Quiz",
@@ -64,11 +69,16 @@ export default function Details() {
     };
     
     fetchQuiz();
-  }, [qid, cid, dispatch]);
+  }, [qid, cid, dispatch, isFaculty, navigate]);
   
   const handleEdit = () => {
-    console.log("Edit button clicked, navigating to edit page");
-    console.log(`Full navigation path: /Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
+    if (!isFaculty) {
+      alert("Only faculty members can edit quizzes.");
+      return;
+    }
+    
+    // console.log("Edit button clicked, navigating to edit page");
+    // console.log(`Full navigation path: /Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
 
     setTimeout(() => {
@@ -83,10 +93,6 @@ export default function Details() {
   const handleStartQuiz = () => {
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/take`);
   };
-  
-  // const handleBack = () => {
-  //   navigate(`/Kambaz/Courses/${cid}/Quizzes`);
-  // };
 
   if (loading) {
     return <div>Loading quiz details...</div>;
@@ -98,7 +104,6 @@ export default function Details() {
   
   return (
     <div>
-      {/* Header buttons */}
       <div className="d-flex justify-content-end mb-4">
         {isFaculty && (
           <>
@@ -174,7 +179,6 @@ export default function Details() {
               (quiz.webcamRequired ? "Yes" : "No") : 
               quiz.webcamRequired || "No"}
               </td>
-              {/* <td>{quiz.webcamRequired || "No"}</td> */}
             </tr>
             <tr>
               <td className="text-end text-secondary pe-3">Lock Questions After Answering</td>
@@ -182,7 +186,6 @@ export default function Details() {
               (quiz.lockQuestionsAfterAnswering ? "Yes" : "No") : 
               quiz.lockQuestionsAfterAnswering || "No"}
               </td>
-              {/* <td>{quiz.lockQuestionsAfterAnswering || "No"}</td> */}
             </tr>
           </tbody>
         </table>
@@ -224,7 +227,6 @@ export default function Details() {
   );
 }
 
-// Helper function to format dates
 const formatDate = (dateString?: string): string => {
   if (!dateString) return "Not set";
   

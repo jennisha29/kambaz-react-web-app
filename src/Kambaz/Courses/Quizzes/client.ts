@@ -35,17 +35,16 @@ export interface Quiz {
   published: boolean;
   quizType: string;
   assignmentGroup: string;
-  shuffleAnswers: boolean; // Changed from string to boolean
+  shuffleAnswers: boolean;
   timeLimit?: number;
-  multipleAttempts: boolean; // Changed from string to boolean
+  multipleAttempts: boolean;
   attempts?: number;
-  showCorrectAnswers: boolean; // Changed from string to boolean
+  showCorrectAnswers: boolean;
   accessCode?: string;
-  oneQuestionAtATime: boolean; // Changed from string to boolean
-  webcamRequired: boolean; // Changed from string to boolean
-  lockQuestionsAfterAnswering: boolean; // Changed from string to boolean
+  oneQuestionAtATime: boolean;
+  webcamRequired: boolean;
+  lockQuestionsAfterAnswering: boolean;
   questions: QuizQuestion[];
-  // Add student score tracking
   userScore?: number;
 }
 
@@ -68,7 +67,7 @@ export interface QuizAttempt {
 export const findQuizzesForCourse = async (courseId: string) => {
   try {
     const response = await axiosWithCredentials.get(`${COURSES_API}/${courseId}/quizzes`);
-    console.log("Quizzes fetched:", response.data);
+    // console.log("Quizzes fetched:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error finding quizzes for course:", error);
@@ -83,29 +82,15 @@ export const findQuizById = async (quizId: string) => {
     return response.data;
   } catch (error) {
     console.error("Error finding quiz by ID:", error);
-    return []; // Return empty array instead of throwing
+    throw error;
   }
 };
 
 
-// export const createQuiz = async (courseId: string, quiz: Partial<Quiz>) => {
-//   try {
-//     console.log("Creating quiz with data:", quiz);
-//     const response = await axiosWithCredentials.post(`${COURSES_API}/${courseId}/quizzes`, quiz);
-//     console.log("Server response after creating quiz:", response.data);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error creating quiz:", error);
-//     throw error;
-//   }
-// };
-
 export const createQuiz = async (courseId: string, quiz: Partial<Quiz>) => {
   try {
-    console.log("Creating quiz for course ID:", courseId);
-    console.log("Quiz data being sent:", JSON.stringify(quiz, null, 2));
-    
-    // Validate required fields
+    // console.log("Creating quiz for course ID:", courseId);
+    // console.log("Quiz data being sent:", JSON.stringify(quiz, null, 2));
     if (!quiz.title) {
       throw new Error("Quiz title is required");
     }
@@ -113,26 +98,21 @@ export const createQuiz = async (courseId: string, quiz: Partial<Quiz>) => {
     if (!courseId) {
       throw new Error("Course ID is required to create a quiz");
     }
-    
-    // Ensure _id field is NOT present in the request
-    // Clone the quiz object and remove any _id to ensure we're creating, not updating
     const { _id, ...quizWithoutId } = quiz;
     
-    // Make sure course ID is included
     const quizData = {
       ...quizWithoutId,
       course: courseId
     };
     
-    console.log("Final data being sent to API:", JSON.stringify(quizData, null, 2));
+    // console.log("Final data being sent to API:", JSON.stringify(quizData, null, 2));
     
-    // Make the API request
     const response = await axiosWithCredentials.post(
       `${COURSES_API}/${courseId}/quizzes`, 
       quizData
     );
     
-    console.log("Server response for quiz creation:", response.data);
+    // console.log("Server response for quiz creation:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error creating quiz:", error);
@@ -141,40 +121,15 @@ export const createQuiz = async (courseId: string, quiz: Partial<Quiz>) => {
 };
 
 
-// export const updateQuiz = async (quiz: Partial<Quiz>) => {
-//   try {
-//     console.log("Updating quiz with data:", quiz);
-//     if (!quiz._id) {
-//       throw new Error("Quiz ID is required for update");
-//     }
-//     const response = await axiosWithCredentials.put(`${QUIZZES_API}/${quiz._id}`, quiz);
-//     console.log("Server response after updating quiz:", response.data);
-//     return response.data;
-//   } catch (error) {
-//     console.error("Error updating quiz:", error);
-//     throw error;
-//   }
-// };
-
 export const updateQuiz = async (quiz: Partial<Quiz>) => {
   try {
-    console.log("Client updateQuiz called with data:", quiz);
+    // console.log("Client updateQuiz called with data:", quiz);
     
-    // Verify the quiz has an ID
     if (!quiz._id) {
       throw new Error("Quiz ID is required for update");
-    }
-    
-    // Extract the ID for consistency
+    } 
     const quizId = quiz._id;
-    
-    // Log the ID to verify it's correct
-    console.log("Quiz ID being used for update:", quizId);
-    
-    // Make the API request
     const response = await axiosWithCredentials.put(`${QUIZZES_API}/${quizId}`, quiz);
-    
-    console.log("Server response after updating quiz:", response.data);
     return response.data;
   } catch (error) {
     console.error("Error in client.updateQuiz:", error);
@@ -229,6 +184,44 @@ export const getAllQuizAttempts = async (quizId: string) => {
     return response.data;
   } catch (error) {
     console.error("Error getting all quiz attempts:", error);
+    throw error;
+  }
+};
+
+export const addQuestionToQuiz = async (quizId: string, question: QuizQuestion) => {
+  try {
+    // console.log("Adding question to quiz:", quizId);
+    // console.log("Question data:", question);
+    const response = await axiosWithCredentials.post(`${QUIZZES_API}/${quizId}/questions`, question);
+    // console.log("Server response after adding question:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error adding question to quiz:", error);
+    throw error;
+  }
+};
+
+export const updateQuizQuestion = async (quizId: string, questionId: string, updates: Partial<QuizQuestion>) => {
+  try {
+    // console.log("Updating question:", questionId, "for quiz:", quizId);
+    // console.log("Question updates:", updates);
+    const response = await axiosWithCredentials.put(`${QUIZZES_API}/${quizId}/questions/${questionId}`, updates);
+    // console.log("Server response after updating question:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating quiz question:", error);
+    throw error;
+  }
+};
+
+export const deleteQuizQuestion = async (quizId: string, questionId: string) => {
+  try {
+    // console.log("Deleting question:", questionId, "from quiz:", quizId);
+    const response = await axiosWithCredentials.delete(`${QUIZZES_API}/${quizId}/questions/${questionId}`);
+    // console.log("Server response after deleting question:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting quiz question:", error);
     throw error;
   }
 };

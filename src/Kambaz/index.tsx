@@ -231,6 +231,7 @@ export default function Kambaz() {
         </ProtectedRoute>
       }
       />
+      
             
             <Route
               path="/Enrollments"
