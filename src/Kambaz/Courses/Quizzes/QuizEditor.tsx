@@ -257,7 +257,7 @@ export default function QuizEditor() {
 
   const handleCancel = () => navigate(`/Kambaz/Courses/${cid}/Quizzes`);
 
-  const handleDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const text = e.target.value;
     const words = text.trim().split(/\s+/).filter(w => w.length > 0);
     setWordCount(words.length);

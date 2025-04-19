@@ -3,8 +3,8 @@ import Modules from "./Modules";
 import Home from "./Home";
 import Assignments from "./Assignments";
 import AssignmentEditor from "./Assignments/Editor";
-import QuizList from "./Quizzes/QuizList"; // Update this import
-import Details from "./Quizzes/Details"; // Add this import
+import QuizList from "./Quizzes/QuizList";
+import Details from "./Quizzes/Details";
 import People from "./People";
 import { Navigate, Route, Routes, useParams, useLocation } from "react-router";
 import { useSelector } from "react-redux";
@@ -40,8 +40,6 @@ export default function Courses() {
                 <Route path="Assignments" element={<Assignments />} />
                 <Route path="Assignments/new" element={<AssignmentEditor />} />
                 <Route path="Assignments/:aid" element={<AssignmentEditor />} />
-                
-                {/* Quiz routes */}
                 <Route path="Quizzes" element={<QuizList />} />
                 <Route path="Quizzes/new" element={<QuizEditor />} />
                 <Route path="Quizzes/:qid" element={<Details />} />
