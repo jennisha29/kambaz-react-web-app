@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { setSelectedQuiz } from "./reducer";
 import * as client from "./client";
 
+
 export default function Details() {
   const { qid, cid } = useParams();
   const navigate = useNavigate();
@@ -22,7 +23,6 @@ export default function Details() {
         try {
           setLoading(true);
           const fetchedQuiz = await client.findQuizById(qid);
-          // console.log("Quiz data retrieved:", fetchedQuiz);
           
           if (fetchedQuiz) {
             setQuiz(fetchedQuiz);
@@ -76,9 +76,7 @@ export default function Details() {
       alert("Only faculty members can edit quizzes.");
       return;
     }
-    
-    // console.log("Edit button clicked, navigating to edit page");
-    // console.log(`Full navigation path: /Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
+
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
 
     setTimeout(() => {
@@ -92,6 +90,21 @@ export default function Details() {
   
   const handleStartQuiz = () => {
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/take`);
+  };
+
+
+  const formatCorrectAnswerOption = (option: string | undefined) => {
+    if (!option) return "Immediately";
+    
+    if (option === "immediately") return "Immediately";
+    if (option === "after_due_date") return "After due date";
+    
+    if (option.startsWith("after_attempt_")) {
+      const attemptNumber = option.split("_")[2];
+      return `After attempt ${attemptNumber}`;
+    }
+    
+    return option;
   };
 
   if (loading) {
@@ -126,6 +139,12 @@ export default function Details() {
       
       <h2 className="mb-4">{quiz.title}</h2>
       
+      {quiz.description && !isFaculty && (
+        <div className="mb-3 p-1 border rounded">
+          <h5 className="text-danger">Instructions:</h5>
+           <div>{quiz.description.replace(/<[^>]+>/g, '')}</div>
+        </div>
+      )}
       <div className="mb-4">
         <table className="w-50">
           <tbody>
@@ -141,10 +160,13 @@ export default function Details() {
               <td className="text-end text-secondary pe-3">Assignment Group</td>
               <td>{quiz.assignmentGroup || "QUIZZES"}</td>
             </tr>
-            <tr>
-              <td className="text-end text-secondary pe-3">Shuffle Answers</td>
-              <td>{typeof quiz.shuffleAnswers === 'boolean' ? (quiz.shuffleAnswers ? "Yes" : "No") : quiz.shuffleAnswers || "No"}</td>
-            </tr>
+
+            {isFaculty && (
+              <tr>
+                <td className="text-end text-secondary pe-3">Shuffle Answers</td>
+                <td>{typeof quiz.shuffleAnswers === 'boolean' ? (quiz.shuffleAnswers ? "Yes" : "No") : quiz.shuffleAnswers || "No"}</td>
+              </tr>
+            )}
             <tr>
               <td className="text-end text-secondary pe-3">Time Limit</td>
               <td>{quiz.timeLimit ? `${quiz.timeLimit} Minutes` : "No Time Limit"}</td>
@@ -153,26 +175,50 @@ export default function Details() {
               <td className="text-end text-secondary pe-3">Multiple Attempts</td>
               <td>{typeof quiz.multipleAttempts === 'boolean' ? (quiz.multipleAttempts ? "Yes" : "No") : quiz.multipleAttempts || "No"}</td>
             </tr>
-            <tr>
-              <td className="text-end text-secondary pe-3">View Responses</td>
-              <td>{quiz.viewResponses || "Always"}</td>
-            </tr>
-            <tr>
-              <td className="text-end text-secondary pe-3">Show Correct Answers</td>
-              <td>{quiz.showCorrectAnswers || "Immediately"}</td>
-            </tr>
-            <tr>
-              <td className="text-end text-secondary pe-3">One Question at a Time</td>
-              <td>{quiz.oneQuestionAtTime || "Yes"}</td>
-            </tr>
-            <tr>
-              <td className="text-end text-secondary pe-3">Require Respondus LockDown<br />Browser</td>
-              <td>{quiz.requireRespondusLockDown || "No"}</td>
-            </tr>
-            <tr>
-              <td className="text-end text-secondary pe-3">Required to View Quiz Results</td>
-              <td>{quiz.requiredToViewResults || "No"}</td>
-            </tr>
+            {quiz.multipleAttempts && (
+              <tr>
+                <td className="text-end text-secondary pe-3">Number of Attempts</td>
+                <td>{quiz.attempts || 1}</td>
+              </tr>
+            )}
+
+            {isFaculty && (
+              <tr>
+                <td className="text-end text-secondary pe-3">View Responses</td>
+                <td>{quiz.viewResponses || "Always"}</td>
+              </tr>
+            )}
+
+            {isFaculty && (
+              <tr>
+                <td className="text-end text-secondary pe-3">Show Correct Answers</td>
+                <td>{typeof quiz.showCorrectAnswers === 'boolean' ? 
+                  (quiz.showCorrectAnswers ? formatCorrectAnswerOption(quiz.showCorrectAnswerOption) : "No") : 
+                  quiz.showCorrectAnswers || "No"}
+                </td>
+              </tr>
+            )}
+
+            {isFaculty && (
+              <tr>
+                <td className="text-end text-secondary pe-3">One Question at a Time</td>
+                <td>{quiz.oneQuestionAtTime || "Yes"}</td>
+              </tr>
+            )}
+ 
+            {isFaculty && (
+              <tr>
+                <td className="text-end text-secondary pe-3">Require Respondus LockDown<br />Browser</td>
+                <td>{quiz.requireRespondusLockDown || "No"}</td>
+              </tr>
+            )}
+
+            {isFaculty && (
+              <tr>
+                <td className="text-end text-secondary pe-3">Required to View Quiz Results</td>
+                <td>{quiz.requiredToViewResults || "No"}</td>
+              </tr>
+            )}
             <tr>
               <td className="text-end text-secondary pe-3">Webcam Required</td>
               <td>{typeof quiz.webcamRequired === 'boolean' ? 
@@ -180,11 +226,22 @@ export default function Details() {
               quiz.webcamRequired || "No"}
               </td>
             </tr>
+
+            {isFaculty && (
+              <tr>
+                <td className="text-end text-secondary pe-3">Lock Questions After Answering</td>
+                <td>{typeof quiz.lockQuestionsAfterAnswering === 'boolean' ? 
+                (quiz.lockQuestionsAfterAnswering ? "Yes" : "No") : 
+                quiz.lockQuestionsAfterAnswering || "No"}
+                </td>
+              </tr>
+            )}
+
             <tr>
-              <td className="text-end text-secondary pe-3">Lock Questions After Answering</td>
-              <td>{typeof quiz.lockQuestionsAfterAnswering === 'boolean' ? 
-              (quiz.lockQuestionsAfterAnswering ? "Yes" : "No") : 
-              quiz.lockQuestionsAfterAnswering || "No"}
+              <td className="text-end text-secondary pe-3">Access Code</td>
+              <td>{isFaculty ? 
+                (quiz.accessCode ? quiz.accessCode : "None") : 
+                (quiz.accessCode ? "Required" : "None")}
               </td>
             </tr>
           </tbody>

@@ -7,6 +7,8 @@ import * as client from "./client";
 import { Quiz } from "./client";
 import { FaLock, FaBan, FaCheck, FaEdit, FaEye } from "react-icons/fa";
 import { BsThreeDotsVertical } from "react-icons/bs";
+import 'react-quill/dist/quill.snow.css';
+import ReactQuill from 'react-quill';
 
 export default function QuizEditor() {
   const { qid, cid } = useParams();
@@ -21,6 +23,8 @@ export default function QuizEditor() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("details");
   const [wordCount, setWordCount] = useState(0);
+  const [showAccessCode, setShowAccessCode] = useState(false);
+  const [showCorrectAnswerOption, setShowCorrectAnswerOption] = useState<string>("immediately");
 
   const [assignments, setAssignments] = useState([
     {
@@ -40,6 +44,23 @@ export default function QuizEditor() {
       navigate(`/Kambaz/Courses/${cid}/Quizzes`);
     }
   }, [isFaculty, navigate, cid]);
+
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .dropdown-toggle::after {
+        display: none !important;
+      }
+      input[type="checkbox"] {
+      border: 1.5px solid #6c757d !important;
+      box-shadow: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const handleDateChange = (index: number, field: "dueDate" | "dueTime" | "availableFromDate" | "availableFromTime" | "availableUntilDate" | "availableUntilTime", value: string) => {
     const updated = [...assignments];
@@ -72,8 +93,11 @@ export default function QuizEditor() {
         try {
           setLoading(true);
           const fetchedQuiz = await client.findQuizById(qid);
-          // console.log("Fetched quiz:", fetchedQuiz);
           setQuiz(fetchedQuiz);
+          
+          if (fetchedQuiz.showCorrectAnswerOption) {
+            setShowCorrectAnswerOption(fetchedQuiz.showCorrectAnswerOption);
+          }
           
           const extractTimeFromDate = (dateString: string) => {
             if (!dateString) return "00:00";
@@ -112,6 +136,7 @@ export default function QuizEditor() {
           multipleAttempts: false,
           attempts: 1,
           showCorrectAnswers: true,
+          showCorrectAnswerOption: "immediately",
           accessCode: "",
           oneQuestionAtATime: true,
           webcamRequired: false,
@@ -174,6 +199,7 @@ export default function QuizEditor() {
         multipleAttempts: quiz.multipleAttempts,
         attempts: quiz.attempts,
         showCorrectAnswers: quiz.showCorrectAnswers,
+        showCorrectAnswerOption: showCorrectAnswerOption,
         accessCode: quiz.accessCode || "",
         oneQuestionAtATime: quiz.oneQuestionAtATime,
         webcamRequired: quiz.webcamRequired,
@@ -192,16 +218,11 @@ export default function QuizEditor() {
           _id: qid
         };
         
-        // console.log("Updating quiz with data:", JSON.stringify(quizToUpdate, null, 2));
-        
         const updatedQuiz = await client.updateQuiz(quizToUpdate);
-        // console.log("Quiz updated:", updatedQuiz);
         
         dispatch(updateQuiz(updatedQuiz));
         alert("Quiz updated successfully!");
-      } else {
-        // console.log("Creating new quiz with data:", JSON.stringify(quizData, null, 2));
-        
+      } else {        
         const savedQuiz = await client.createQuiz(cid as string, quizData);
         console.log("New quiz created:", savedQuiz);
         dispatch(addQuiz(savedQuiz));
@@ -248,6 +269,20 @@ export default function QuizEditor() {
     return quiz.questions.reduce((sum, q) => sum + (q.points || 0), 0);
   };
 
+  const generateAttemptOptions = () => {
+    if (!quiz || !quiz.attempts) return [];
+    
+    const options = [];
+    for (let i = 1; i <= quiz.attempts; i++) {
+      options.push(
+        <option key={i} value={`after_attempt_${i}`}>
+          After attempt {i}
+        </option>
+      );
+    }
+    return options;
+  };
+
   if (!isFaculty) {
     return null; 
   }
@@ -272,7 +307,21 @@ export default function QuizEditor() {
             </span>
           </div>
           <Dropdown>
-            <Dropdown.Toggle variant="light" className="border" id="dropdown-options">
+            <Dropdown.Toggle
+             as="div"
+             id="dropdown-options"
+             className="d-flex align-items-center justify-content-center border rounded"
+             style={{
+              width: "36px",
+              height: "36px",
+              padding: 0,
+              cursor: "pointer",
+              backgroundColor: "#f8f9fa",
+              color: "#6c757d",
+              border: "1px solid #ced4da"
+            }}
+
+             >
               <BsThreeDotsVertical />
             </Dropdown.Toggle>
             <Dropdown.Menu align="end">
@@ -305,7 +354,7 @@ export default function QuizEditor() {
                 navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/questions`);
               } else {
 
-                alert("Please save the quiz first before adding questions.");
+                alert("Please create the quiz first before adding questions.");
               }
             }}
             className={activeTab === 'questions' ? "text-danger border-top border-start border-end" : "text-secondary"}
@@ -327,15 +376,19 @@ export default function QuizEditor() {
                 className="p-2 border"
               />
             </Form.Group>
-            <Form.Group className="mb-4">
+            <Form.Group className="mb-1">
               <h5 className="mb-3">Quiz Instructions:</h5>
-              <Form.Control
-              as="textarea"
-              rows={5}
-              value={quiz.description || ""}
-              onChange={handleDescriptionChange}
-              className="border"
-              />
+              <ReactQuill
+               theme="snow"
+               value={quiz.description || ""}
+               onChange={(value) => {
+              setQuiz((prev) => prev ? { ...prev, description: value } : null);
+              const words = value.replace(/<[^>]+>/g, '').trim().split(/\s+/).filter((w: string) => w.length > 0);
+              setWordCount(words.length);
+            }}
+            style={{ height: "120px", borderRadius: "5px", marginBottom: "0.5rem" }}
+            />
+            <br></br><br></br>
               <div className="text-end">
                 <small className="text-muted ms-2">{wordCount} words</small>
               </div>
@@ -404,7 +457,7 @@ export default function QuizEditor() {
               )}
             </div>
             
-            <div className="ms-4 mb-3 border rounded p-2">
+            <div className="ms-4 mb-3">
               <Form.Check
                 type="checkbox"
                 id="multiple-attempts"
@@ -416,7 +469,6 @@ export default function QuizEditor() {
               {quiz.multipleAttempts && (
                 <div className="mt-2 ms-4">
                   <Form.Group>
-                    <Form.Label>Number of Attempts</Form.Label>
                     <Form.Control
                       type="number"
                       min="1"
@@ -437,6 +489,51 @@ export default function QuizEditor() {
                 checked={quiz.showCorrectAnswers}
                 onChange={(e) => setQuiz({...quiz, showCorrectAnswers: e.target.checked})}
               />
+              
+              {quiz.showCorrectAnswers && (
+                <div className="mt-2 ms-4">
+                  <Form.Group>
+                    <Form.Select
+                      value={showCorrectAnswerOption}
+                      onChange={(e) => setShowCorrectAnswerOption(e.target.value)}
+                      style={{maxWidth: "300px"}}
+                    >
+                      {!quiz.multipleAttempts ? (
+                        <>
+                          <option value="immediately">Immediately</option>
+                          <option value="after_due_date">After due date</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="immediately">Immediately</option>
+                          <option value="after_due_date">After due date</option>
+                          {generateAttemptOptions()}
+                        </>
+                      )}
+                    </Form.Select>
+                  </Form.Group>
+                </div>
+              )}
+            </div>
+            
+            <div className="ms-4 mb-3 border rounded p-2">
+              <Form.Label>Access Code</Form.Label>
+              <div className="d-flex align-items-center">
+                <Form.Control
+                  type={showAccessCode ? "text" : "password"}
+                  placeholder="Enter access code (optional)"
+                  value={quiz.accessCode || ""}
+                  onChange={(e) => setQuiz({...quiz, accessCode: e.target.value})}
+                  style={{maxWidth: "300px"}}
+                />
+                <Button 
+                  variant="outline-secondary" 
+                  className="ms-2"
+                  onClick={() => setShowAccessCode(!showAccessCode)}
+                >
+                  {showAccessCode ? "Hide" : "Show"}
+                </Button>
+              </div>
             </div>
             
             <div className="ms-4 mb-3">
