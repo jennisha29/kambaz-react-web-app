@@ -25,6 +25,7 @@ interface Quiz {
   title: string;
   description: string;
   questions: Question[];
+  timeLimit?: number;
 }
 
 interface Answer {
@@ -47,6 +48,7 @@ export default function QuizAttempt() {
   const [submittedAnswers, setSubmittedAnswers] = useState<Answer[] | null>(
     null
   );
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   useEffect(() => {
     const fetchPreviousAttempt = async () => {
@@ -77,6 +79,34 @@ export default function QuizAttempt() {
 
     fetchPreviousAttempt();
   }, [selectedQuiz?._id, currentUser?._id]);
+
+  useEffect(() => {
+    if (selectedQuiz?.timeLimit && score === null) {
+      const totalSeconds = selectedQuiz.timeLimit * 60;
+      setTimeLeft(totalSeconds);
+    }
+  }, [selectedQuiz?.timeLimit, score]);
+
+  useEffect(() => {
+    if (timeLeft === null || score !== null) return;
+    if (timeLeft <= 0) {
+      handleSubmit();
+      return;
+    }
+    const timer = setInterval(
+      () => setTimeLeft((prev) => (prev ? prev - 1 : 0)),
+      1000
+    );
+    return () => clearInterval(timer);
+  }, [timeLeft, score]);
+
+  const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (seconds % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   const handleOptionChange = (questionId: string, value: any) => {
     setAnswers((prevAnswers) => ({ ...prevAnswers, [questionId]: value }));
@@ -141,16 +171,18 @@ export default function QuizAttempt() {
   if (score !== null && submittedAnswers) {
     return (
       <Container className="py-4">
-        <h2 className="mb-4">Quiz Submitted!</h2>
-        <p className="mb-4">
-          Your score:{" "}
-          <strong>
-            {score} /{" "}
-            {selectedQuiz.questions.reduce((sum, q) => sum + q.points, 0)}
-          </strong>
-        </p>
-
-        {selectedQuiz.questions.map((question, idx) => {
+        <Row className="mb-3">
+          <Col>
+            <h2>{selectedQuiz.title}</h2>
+          </Col>
+          <Col className="text-end text-success">
+            <h5>
+              Score: {score} /{" "}
+              {selectedQuiz.questions.reduce((sum, q) => sum + q.points, 0)}
+            </h5>
+          </Col>
+        </Row>
+        {selectedQuiz.questions.map((question, index) => {
           const userAnswer = answers[question._id];
           const questionText =
             question.text || question.questionText || "Untitled Question";
@@ -160,7 +192,7 @@ export default function QuizAttempt() {
               <Card.Body>
                 <Row className="mb-2">
                   <Col>
-                    <h5>Question {idx + 1}</h5>
+                    <h5>Question {index + 1}</h5>
                   </Col>
                   <Col className="text-end">{question.points} pts</Col>
                 </Row>
@@ -175,10 +207,10 @@ export default function QuizAttempt() {
                         key={option.id}
                         className={`p-2 mb-2 rounded border ${
                           isCorrect
-                            ? "border-success bg-light"
+                            ? "border-success"
                             : isSelected
-                            ? "border-danger bg-light"
-                            : ""
+                            ? "border-danger"
+                            : "border"
                         }`}
                       >
                         <Form.Check
@@ -196,52 +228,46 @@ export default function QuizAttempt() {
                     );
                   })}
 
-                {question.questionType === "True/False" && (
-                  <>
-                    {[true, false].map((boolVal) => {
-                      const isCorrect = question.correctAnswer === boolVal;
-                      const isSelected = userAnswer === boolVal;
-                      return (
-                        <div
-                          key={String(boolVal)}
-                          className={`p-2 mb-2 rounded border ${
-                            isCorrect
-                              ? "border-success bg-light"
-                              : isSelected
-                              ? "border-danger bg-light"
-                              : ""
-                          }`}
-                        >
-                          <Form.Check
-                            type="radio"
-                            label={
-                              <span>
-                                {String(boolVal).charAt(0).toUpperCase() +
-                                  String(boolVal).slice(1)}{" "}
-                                {isCorrect && <strong>(Correct)</strong>}
-                              </span>
-                            }
-                            checked={isSelected}
-                            readOnly
-                          />
-                        </div>
-                      );
-                    })}
-                  </>
-                )}
+                {question.questionType === "True/False" &&
+                  [true, false].map((val) => {
+                    const isCorrect = question.correctAnswer === val;
+                    const isSelected = userAnswer === val;
+                    return (
+                      <div
+                        key={String(val)}
+                        className={`p-2 mb-2 rounded border ${
+                          isCorrect
+                            ? "border-success"
+                            : isSelected
+                            ? "border-danger"
+                            : "border"
+                        }`}
+                      >
+                        <Form.Check
+                          type="radio"
+                          label={
+                            <span>
+                              {String(val)}{" "}
+                              {isCorrect && <strong>(Correct)</strong>}
+                            </span>
+                          }
+                          checked={isSelected}
+                          readOnly
+                        />
+                      </div>
+                    );
+                  })}
 
                 {question.questionType === "Fill in the Blank" && (
-                  <>
+                  <div>
                     <p>
-                      Your answer: <strong>{userAnswer}</strong>
+                      <strong>Your answer:</strong> {userAnswer}
                     </p>
                     <p>
-                      Correct answer(s):{" "}
-                      <strong>
-                        {(question.correctAnswer as string[]).join(", ")}
-                      </strong>
+                      <strong>Correct answer(s):</strong>{" "}
+                      {(question.correctAnswer as string[]).join(", ")}
                     </p>
-                  </>
+                  </div>
                 )}
               </Card.Body>
             </Card>
@@ -257,8 +283,17 @@ export default function QuizAttempt() {
 
   return (
     <Container className="py-4">
-      <h2 className="mb-3">{selectedQuiz.title}</h2>
-      <p className="mb-4">{selectedQuiz.description}</p>
+      <Row className="mb-3">
+        <Col>
+          <h2>{selectedQuiz.title}</h2>
+        </Col>
+        {timeLeft !== null && score === null && (
+          <Col className="text-end">
+            <h5 className="text-danger">Time Left: {formatTime(timeLeft)}</h5>
+          </Col>
+        )}
+      </Row>
+      <p>{selectedQuiz.description}</p>
 
       <Card className="mb-4">
         <Card.Body>
