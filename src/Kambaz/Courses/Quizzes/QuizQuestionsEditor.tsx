@@ -953,7 +953,13 @@ const QuizQuestionsEditor: React.FC = () => {
                   <div className="border rounded p-3">
                     <p><strong>Type:</strong> {question.questionType}</p>
                     <p><strong>Points:</strong> {question.points}</p>
-                    <p><strong>Question:</strong> {question.questionText || "No question text provided."}</p>
+                    {/* <p><strong>Question:</strong> {question.questionText || "No question text provided."}</p> */}
+                    <p>
+                      <strong>Question:</strong>{" "}
+                      {question.questionText
+                      ? question.questionText.replace(/<[^>]+>/g, '') // Removes all HTML tags
+                      : "No question text provided."}
+                      </p>
                     {question.questionType === QuestionType.MULTIPLE_CHOICE && (
                       <div>
                         <p><strong>Choices:</strong></p>
