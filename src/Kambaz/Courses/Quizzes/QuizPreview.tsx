@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button, Form, Container, Row, Col, Card } from "react-bootstrap";
 
 interface Option {
@@ -26,6 +27,9 @@ interface Quiz {
 }
 
 export default function QuizPreview() {
+  const { cid, qid } = useParams();
+  const navigate = useNavigate();
+
   const selectedQuiz = useSelector(
     (state: any) => state.quizzesReducer?.selectedQuiz as Quiz
   );
@@ -62,6 +66,10 @@ export default function QuizPreview() {
       }
     });
     setScore(totalScore);
+  };
+
+  const handleEditQuiz = () => {
+    navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
   };
 
   if (!selectedQuiz) return <Container>Loading Quiz...</Container>;
@@ -262,11 +270,16 @@ export default function QuizPreview() {
           Next
         </Button>
 
-        {currentQuestionIndex === selectedQuiz.questions.length - 1 && (
-          <Button variant="danger" onClick={handleSubmit}>
-            Submit Quiz
+        <div className="d-flex gap-2 ms-auto">
+          {currentQuestionIndex === selectedQuiz.questions.length - 1 && (
+            <Button variant="danger" onClick={handleSubmit}>
+              Submit Quiz
+            </Button>
+          )}
+          <Button variant="secondary" onClick={handleEditQuiz}>
+            Edit Quiz
           </Button>
-        )}
+        </div>
       </div>
     </Container>
   );

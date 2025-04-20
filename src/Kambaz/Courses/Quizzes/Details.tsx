@@ -17,6 +17,7 @@ export default function Details() {
 
   const [quiz, setQuiz] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [userAttemptsCount, setUserAttemptsCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchQuiz = async () => {
@@ -24,11 +25,20 @@ export default function Details() {
         try {
           setLoading(true);
           const fetchedQuiz = await client.findQuizById(qid);
-          // console.log("Quiz data retrieved:", fetchedQuiz);
 
           if (fetchedQuiz) {
             setQuiz(fetchedQuiz);
             dispatch(setSelectedQuiz(fetchedQuiz));
+
+            if (!isFaculty && currentUser?._id) {
+              const allAttempts = await client.findQuizAttemptsByUserId(
+                currentUser._id
+              );
+              const attemptsForThisQuiz = allAttempts.filter(
+                (a: any) => a.quiz === fetchedQuiz._id
+              );
+              setUserAttemptsCount(attemptsForThisQuiz.length);
+            }
           }
           setLoading(false);
         } catch (error) {
@@ -73,18 +83,14 @@ export default function Details() {
     };
 
     fetchQuiz();
-  }, [qid, cid, dispatch, isFaculty, navigate]);
+  }, [qid, cid, dispatch, isFaculty, navigate, currentUser?._id]);
 
   const handleEdit = () => {
     if (!isFaculty) {
       alert("Only faculty members can edit quizzes.");
       return;
     }
-
-    // console.log("Edit button clicked, navigating to edit page");
-    // console.log(`Full navigation path: /Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
-
     setTimeout(() => {
       console.log(
         "Current location after navigation:",
@@ -100,6 +106,7 @@ export default function Details() {
   const handleStartQuiz = () => {
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/take`);
   };
+
   const handleViewAttempt = () => {
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/view`);
   };
@@ -111,6 +118,9 @@ export default function Details() {
   if (!quiz) {
     return <div>Quiz not found.</div>;
   }
+
+  const canAttemptQuiz =
+    quiz.attempts === undefined || userAttemptsCount < quiz.attempts;
 
   return (
     <div>
@@ -189,7 +199,13 @@ export default function Details() {
               <td className="text-end text-secondary pe-3">
                 Show Correct Answers
               </td>
-              <td>{quiz.showCorrectAnswers || "Immediately"}</td>
+              <td>
+                {typeof quiz.showCorrectAnswers === "boolean"
+                  ? quiz.showCorrectAnswers
+                    ? "Yes"
+                    : "No"
+                  : quiz.showCorrectAnswers || "No"}
+              </td>
             </tr>
             <tr>
               <td className="text-end text-secondary pe-3">
@@ -260,9 +276,11 @@ export default function Details() {
 
       {!isFaculty && quiz.published && (
         <div className="d-flex gap-3 mt-3">
-          <Button variant="danger" size="lg" onClick={handleStartQuiz}>
-            Start Quiz
-          </Button>{" "}
+          {canAttemptQuiz && (
+            <Button variant="danger" size="lg" onClick={handleStartQuiz}>
+              Start Quiz
+            </Button>
+          )}
           <Button
             variant="light"
             className="border me-2"

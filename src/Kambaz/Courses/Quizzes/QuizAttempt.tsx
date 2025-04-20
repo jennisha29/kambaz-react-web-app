@@ -26,6 +26,7 @@ interface Quiz {
   description: string;
   questions: Question[];
   timeLimit?: number;
+  showCorrectAnswers?: boolean;
 }
 
 interface Answer {
@@ -130,7 +131,6 @@ export default function QuizAttempt() {
         score: totalScore,
         answers: answerArray,
       });
-      console.log("Attempt submitted successfully");
     } catch (err) {
       console.error("Failed to submit quiz attempt:", err);
     }
@@ -152,6 +152,7 @@ export default function QuizAttempt() {
             </h5>
           </Col>
         </Row>
+
         {selectedQuiz.questions.map((question, index) => {
           const userAnswer = answers[question._id];
           const questionText =
@@ -170,7 +171,8 @@ export default function QuizAttempt() {
 
                 {question.questionType === "Multiple Choice" &&
                   question.options?.map((option) => {
-                    const isCorrect = option.isCorrect;
+                    const isCorrect =
+                      selectedQuiz.showCorrectAnswers && option.isCorrect;
                     const isSelected = userAnswer === option.id;
                     return (
                       <div
@@ -200,7 +202,9 @@ export default function QuizAttempt() {
 
                 {question.questionType === "True/False" &&
                   [true, false].map((val) => {
-                    const isCorrect = question.correctAnswer === val;
+                    const isCorrect =
+                      selectedQuiz.showCorrectAnswers &&
+                      question.correctAnswer === val;
                     const isSelected = userAnswer === val;
                     return (
                       <div
@@ -233,10 +237,12 @@ export default function QuizAttempt() {
                     <p>
                       <strong>Your answer:</strong> {userAnswer}
                     </p>
-                    <p>
-                      <strong>Correct answer(s):</strong>{" "}
-                      {(question.correctAnswer as string[]).join(", ")}
-                    </p>
+                    {selectedQuiz.showCorrectAnswers && (
+                      <p>
+                        <strong>Correct answer(s):</strong>{" "}
+                        {(question.correctAnswer as string[]).join(", ")}
+                      </p>
+                    )}
                   </div>
                 )}
               </Card.Body>

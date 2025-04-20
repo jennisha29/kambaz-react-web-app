@@ -25,6 +25,7 @@ interface Quiz {
   title: string;
   description: string;
   questions: Question[];
+  showCorrectAnswers?: boolean;
 }
 
 interface Answer {
@@ -108,7 +109,8 @@ export default function ViewAttempt() {
 
               {question.questionType === "Multiple Choice" &&
                 question.options?.map((option) => {
-                  const isCorrect = option.isCorrect;
+                  const isCorrect =
+                    selectedQuiz.showCorrectAnswers && option.isCorrect;
                   const isSelected = userAnswer === option.id;
                   return (
                     <div
@@ -138,7 +140,9 @@ export default function ViewAttempt() {
 
               {question.questionType === "True/False" &&
                 [true, false].map((val) => {
-                  const isCorrect = question.correctAnswer === val;
+                  const isCorrect =
+                    selectedQuiz.showCorrectAnswers &&
+                    question.correctAnswer === val;
                   const isSelected = userAnswer === val;
                   return (
                     <div
@@ -171,10 +175,12 @@ export default function ViewAttempt() {
                   <p>
                     <strong>Your answer:</strong> {userAnswer}
                   </p>
-                  <p>
-                    <strong>Correct answer(s):</strong>{" "}
-                    {(question.correctAnswer as string[]).join(", ")}
-                  </p>
+                  {selectedQuiz.showCorrectAnswers && (
+                    <p>
+                      <strong>Correct answer(s):</strong>{" "}
+                      {(question.correctAnswer as string[]).join(", ")}
+                    </p>
+                  )}
                 </div>
               )}
             </Card.Body>
