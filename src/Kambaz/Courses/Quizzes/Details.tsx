@@ -10,23 +10,35 @@ export default function Details() {
   const { qid, cid } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  
-  const { currentUser } = useSelector((state: any) => state.accountReducer || {});
+
+  const { currentUser } = useSelector(
+    (state: any) => state.accountReducer || {}
+  );
   const isFaculty = currentUser && currentUser.role === "FACULTY";
 
   const [quiz, setQuiz] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
+  const [userAttemptsCount, setUserAttemptsCount] = useState<number>(0);
+
   useEffect(() => {
     const fetchQuiz = async () => {
       if (qid && qid !== "new") {
         try {
           setLoading(true);
           const fetchedQuiz = await client.findQuizById(qid);
-          
           if (fetchedQuiz) {
             setQuiz(fetchedQuiz);
             dispatch(setSelectedQuiz(fetchedQuiz));
+
+            if (!isFaculty && currentUser?._id) {
+              const allAttempts = await client.findQuizAttemptsByUserId(
+                currentUser._id
+              );
+              const attemptsForThisQuiz = allAttempts.filter(
+                (a: any) => a.quiz === fetchedQuiz._id
+              );
+              setUserAttemptsCount(attemptsForThisQuiz.length);
+            }
           }
           setLoading(false);
         } catch (error) {
@@ -39,7 +51,7 @@ export default function Details() {
           navigate(`/Kambaz/Courses/${cid}/Quizzes`);
           return;
         }
-        
+
         setQuiz({
           title: "New Quiz",
           quizType: "Graded Quiz",
@@ -58,39 +70,46 @@ export default function Details() {
           lockQuestionsAfterAnswering: "No",
           dueDate: new Date().toISOString(),
           availableFromDate: new Date().toISOString(),
-          availableUntilDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          availableUntilDate: new Date(
+            new Date().getTime() + 7 * 24 * 60 * 60 * 1000
+          ).toISOString(),
           assignTo: "Everyone",
           course: cid,
           published: false,
-          questions: []
+          questions: [],
         });
         setLoading(false);
       }
     };
-    
+
     fetchQuiz();
-  }, [qid, cid, dispatch, isFaculty, navigate]);
-  
+  }, [qid, cid, dispatch, isFaculty, navigate, currentUser?._id]);
+
   const handleEdit = () => {
     if (!isFaculty) {
       alert("Only faculty members can edit quizzes.");
       return;
     }
-
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/edit`);
-
     setTimeout(() => {
-      console.log("Current location after navigation:", window.location.pathname);
+      console.log(
+        "Current location after navigation:",
+        window.location.pathname
+      );
     }, 500);
   };
-  
+
   const handlePreview = () => {
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/preview`);
   };
-  
+
   const handleStartQuiz = () => {
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/take`);
   };
+
+
+  const handleViewAttempt = () => {
+    navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/view`);
 
 
   const formatCorrectAnswerOption = (option: string | undefined) => {
@@ -110,34 +129,35 @@ export default function Details() {
   if (loading) {
     return <div>Loading quiz details...</div>;
   }
-  
+
   if (!quiz) {
     return <div>Quiz not found.</div>;
   }
-  
+
+  const canAttemptQuiz =
+    quiz.attempts === undefined || userAttemptsCount < quiz.attempts;
+
   return (
     <div>
       <div className="d-flex justify-content-end mb-4">
         {isFaculty && (
           <>
-            <Button 
-              variant="outline-secondary" 
+            <Button
+              variant="outline-secondary"
               className="me-2"
               onClick={handlePreview}
             >
               Preview
             </Button>
-            <Button 
-              variant="outline-secondary"
-              onClick={handleEdit}
-            >
+            <Button variant="outline-secondary" onClick={handleEdit}>
               <i className="fas fa-pencil-alt me-1"></i> Edit
             </Button>
           </>
         )}
       </div>
-      
+
       <h2 className="mb-4">{quiz.title}</h2>
+
       
       {quiz.description && !isFaculty && (
         <div className="mb-3 p-1 border rounded">
@@ -149,7 +169,12 @@ export default function Details() {
         <table className="w-50">
           <tbody>
             <tr>
-              <td className="text-end text-secondary pe-3" style={{ width: "45%" }}>Quiz Type</td>
+              <td
+                className="text-end text-secondary pe-3"
+                style={{ width: "45%" }}
+              >
+                Quiz Type
+              </td>
               <td>{quiz.quizType || "Graded Quiz"}</td>
             </tr>
             <tr>
@@ -161,6 +186,7 @@ export default function Details() {
               <td>{quiz.assignmentGroup || "QUIZZES"}</td>
             </tr>
 
+
             {isFaculty && (
               <tr>
                 <td className="text-end text-secondary pe-3">Shuffle Answers</td>
@@ -169,12 +195,23 @@ export default function Details() {
             )}
             <tr>
               <td className="text-end text-secondary pe-3">Time Limit</td>
-              <td>{quiz.timeLimit ? `${quiz.timeLimit} Minutes` : "No Time Limit"}</td>
+              <td>
+                {quiz.timeLimit ? `${quiz.timeLimit} Minutes` : "No Time Limit"}
+              </td>
             </tr>
             <tr>
-              <td className="text-end text-secondary pe-3">Multiple Attempts</td>
-              <td>{typeof quiz.multipleAttempts === 'boolean' ? (quiz.multipleAttempts ? "Yes" : "No") : quiz.multipleAttempts || "No"}</td>
+              <td className="text-end text-secondary pe-3">
+                Multiple Attempts
+              </td>
+              <td>
+                {typeof quiz.multipleAttempts === "boolean"
+                  ? quiz.multipleAttempts
+                    ? "Yes"
+                    : "No"
+                  : quiz.multipleAttempts || "No"}
+              </td>
             </tr>
+
             {quiz.multipleAttempts && (
               <tr>
                 <td className="text-end text-secondary pe-3">Number of Attempts</td>
@@ -221,9 +258,12 @@ export default function Details() {
             )}
             <tr>
               <td className="text-end text-secondary pe-3">Webcam Required</td>
-              <td>{typeof quiz.webcamRequired === 'boolean' ? 
-              (quiz.webcamRequired ? "Yes" : "No") : 
-              quiz.webcamRequired || "No"}
+              <td>
+                {typeof quiz.webcamRequired === "boolean"
+                  ? quiz.webcamRequired
+                    ? "Yes"
+                    : "No"
+                  : quiz.webcamRequired || "No"}
               </td>
             </tr>
 
@@ -238,6 +278,7 @@ export default function Details() {
             )}
 
             <tr>
+
               <td className="text-end text-secondary pe-3">Access Code</td>
               <td>{isFaculty ? 
                 (quiz.accessCode ? quiz.accessCode : "None") : 
@@ -247,7 +288,7 @@ export default function Details() {
           </tbody>
         </table>
       </div>
-      
+
       <div className="mb-4">
         <table className="table table-bordered">
           <thead>
@@ -268,15 +309,22 @@ export default function Details() {
           </tbody>
         </table>
       </div>
-      
+
       {!isFaculty && quiz.published && (
-        <div className="mt-4">
-          <Button 
-            variant="danger"
+        <div className="d-flex gap-3 mt-3">
+          {canAttemptQuiz && (
+            <Button variant="danger" size="lg" onClick={handleStartQuiz}>
+              Start Quiz
+            </Button>
+          )}
+          <Button
+            variant="light"
+            className="border me-2"
             size="lg"
-            onClick={handleStartQuiz}
+            onClick={handleViewAttempt}
+            type="button"
           >
-            Start Quiz
+            View Attempt
           </Button>
         </div>
       )}
@@ -286,16 +334,16 @@ export default function Details() {
 
 const formatDate = (dateString?: string): string => {
   if (!dateString) return "Not set";
-  
+
   try {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric',
-      year: 'numeric',
-      hour: 'numeric', 
-      minute: '2-digit',
-      hour12: true
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   } catch (error) {
     console.error("Error formatting date:", error);
