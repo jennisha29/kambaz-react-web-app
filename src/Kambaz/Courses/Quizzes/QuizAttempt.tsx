@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Button, Form, Container, Row, Col, Card } from "react-bootstrap";
-import { createQuizAttempt, findQuizAttemptsByUserId } from "./client";
+import { createQuizAttempt } from "./client";
 
 interface Option {
   id: string;
@@ -51,41 +51,11 @@ export default function QuizAttempt() {
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   useEffect(() => {
-    const fetchPreviousAttempt = async () => {
-      if (!selectedQuiz?._id || !currentUser?._id) return;
-      try {
-        const allAttempts = await findQuizAttemptsByUserId(currentUser._id);
-        const matchingQuizAttempts = allAttempts.filter(
-          (attempt: any) => attempt.quiz === selectedQuiz._id
-        );
-
-        if (matchingQuizAttempts.length > 0) {
-          const latestAttempt = matchingQuizAttempts.sort(
-            (a: any, b: any) =>
-              new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-          )[0];
-          setScore(latestAttempt.score);
-          const convertedAnswers: Record<string, any> = {};
-          latestAttempt.answers.forEach((ans: Answer) => {
-            convertedAnswers[ans.questionId] = ans.answer;
-          });
-          setAnswers(convertedAnswers);
-          setSubmittedAnswers(latestAttempt.answers);
-        }
-      } catch (err) {
-        console.error("Failed to fetch previous quiz attempts:", err);
-      }
-    };
-
-    fetchPreviousAttempt();
-  }, [selectedQuiz?._id, currentUser?._id]);
-
-  useEffect(() => {
-    if (selectedQuiz?.timeLimit && score === null) {
+    if (selectedQuiz?.timeLimit) {
       const totalSeconds = selectedQuiz.timeLimit * 60;
       setTimeLeft(totalSeconds);
     }
-  }, [selectedQuiz?.timeLimit, score]);
+  }, [selectedQuiz?.timeLimit]);
 
   useEffect(() => {
     if (timeLeft === null || score !== null) return;
