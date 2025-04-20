@@ -313,8 +313,6 @@ export default function Dashboard({
                       {enrolling && (
                         <Button 
                           onClick={() => {
-                            // e.preventDefault();
-                            // e.stopPropagation();
                             console.log(`Button clicked: ${isEnrolled ? 'unenroll' : 'enroll'} for course ${c._id}`);
                             isEnrolled ? handleUnenroll(c._id) : handleEnroll(c._id);
                           }}

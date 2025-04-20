@@ -3,8 +3,8 @@ import Modules from "./Modules";
 import Home from "./Home";
 import Assignments from "./Assignments";
 import AssignmentEditor from "./Assignments/Editor";
-import QuizList from "./Quizzes/QuizList"; // Update this import
-import Details from "./Quizzes/Details"; // Add this import
+import QuizList from "./Quizzes/QuizList";
+import Details from "./Quizzes/Details";
 import People from "./People";
 import { Navigate, Route, Routes, useParams, useLocation } from "react-router";
 import { useSelector } from "react-redux";
@@ -34,6 +34,7 @@ export default function Courses() {
           <CourseNavigation />
         </div>
         <div className="flex-fill">
+
           <Routes>
             <Route path="/" element={<Navigate to="Home" />} />
             <Route path="Home" element={<Home />} />
@@ -59,6 +60,7 @@ export default function Courses() {
             <Route path="Grades" element={<h2>Grades</h2>} />
             <Route path="People" element={<People />} />
           </Routes>
+
         </div>
       </div>
     </div>

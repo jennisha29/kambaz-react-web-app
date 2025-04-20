@@ -7,6 +7,8 @@ import { QuestionType, QuizQuestion } from "./client";
 import * as client from "./client";
 import { v4 as uuidv4 } from "uuid";
 import { FaPencilAlt, FaTrash } from "react-icons/fa";
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 const QuizQuestionsEditor: React.FC = () => {
   const { qid, cid } = useParams();
@@ -509,17 +511,14 @@ const QuizQuestionsEditor: React.FC = () => {
           
           <Form.Group className="mb-3">
             <Form.Label><strong>Question:</strong></Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              value={editingQuestion.questionText}
-              onChange={(e) => handleQuestionChange("questionText", e.target.value)}
-              className="border"
-              placeholder="Enter your question text here"
+            <ReactQuill
+            value={editingQuestion.questionText}
+            onChange={(value) => handleQuestionChange("questionText", value)}
+            style={{ height: "120px", borderRadius: "5px", marginBottom: "2rem" }}
             />
           </Form.Group>
-          
-          <Form.Group className="mb-3">
+          <br></br>
+          <Form.Group className="mt-4">
             <Form.Label>Answers:</Form.Label>
             
             <div className="mb-3">
@@ -660,18 +659,15 @@ const QuizQuestionsEditor: React.FC = () => {
           
           <Form.Group className="mb-3">
             <Form.Label><strong>Question:</strong></Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
+            <ReactQuill
               value={editingQuestion.questionText}
-              onChange={(e) => handleQuestionChange("questionText", e.target.value)}
-              className="border"
-              placeholder="Enter your true/false question here"
-            />
+              onChange={(value) => handleQuestionChange("questionText", value)}
+              style={{ height: "120px", borderRadius: "5px", marginBottom: "2rem" }}
+              />
           </Form.Group>
-          
-          <Form.Group className="mb-3">
-            <Form.Label>Answers:</Form.Label>
+          <br></br>
+          <Form.Group className="mt-4">
+            <Form.Label>Answer:</Form.Label>
             <div className="d-flex mb-2 align-items-center">
               <div className="d-flex align-items-center">
                 {editingQuestion.correctAnswer === true ? (
@@ -777,17 +773,14 @@ const QuizQuestionsEditor: React.FC = () => {
           
           <Form.Group className="mb-3">
             <Form.Label><strong>Question:</strong></Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              value={editingQuestion.questionText}
-              onChange={(e) => handleQuestionChange("questionText", e.target.value)}
-              className="border"
-              placeholder="Enter your fill-in-the-blank question here"
+            <ReactQuill
+            value={editingQuestion.questionText}
+            onChange={(value) => handleQuestionChange("questionText", value)}
+            style={{ height: "120px", borderRadius: "5px", marginBottom: "2rem" }}
             />
           </Form.Group>
-          
-          <Form.Group className="mb-3">
+          <br></br>
+          <Form.Group className="mt-4">
             <Form.Label>Answers:</Form.Label>
             {blankAnswers.map((answer, index) => (
               <div key={index} className="d-flex align-items-center mb-2" style={{ gap: "10px" }}>
@@ -960,7 +953,13 @@ const QuizQuestionsEditor: React.FC = () => {
                   <div className="border rounded p-3">
                     <p><strong>Type:</strong> {question.questionType}</p>
                     <p><strong>Points:</strong> {question.points}</p>
-                    <p><strong>Question:</strong> {question.questionText || "No question text provided."}</p>
+                    {/* <p><strong>Question:</strong> {question.questionText || "No question text provided."}</p> */}
+                    <p>
+                      <strong>Question:</strong>{" "}
+                      {question.questionText
+                      ? question.questionText.replace(/<[^>]+>/g, '') // Removes all HTML tags
+                      : "No question text provided."}
+                      </p>
                     {question.questionType === QuestionType.MULTIPLE_CHOICE && (
                       <div>
                         <p><strong>Choices:</strong></p>

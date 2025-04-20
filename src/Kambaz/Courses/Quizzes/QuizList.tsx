@@ -24,9 +24,7 @@ export default function QuizList() {
     const fetchQuizzes = async () => {
         try {
             if (cid) {
-                // console.log("Fetching quizzes for course:", cid);
                 const fetchedQuizzes = await client.findQuizzesForCourse(cid);
-                // console.log("Quizzes fetched from server:", fetchedQuizzes);
                 dispatch(setQuizzes(fetchedQuizzes));
                 setRefreshKey(prevKey => prevKey + 1);
             }
@@ -36,32 +34,25 @@ export default function QuizList() {
     };
 
     useEffect(() => {
-        // console.log("Quizzes component mounted or updated with course ID:", cid);
         fetchQuizzes();
     }, [cid, dispatch]);
     
     useEffect(() => {
-        // console.log("Location changed to:", location.pathname);
         
         if (location.pathname.includes('/Quizzes') && !location.pathname.includes('/Quizzes/')) {
-            // console.log("Back on quizzes page, fetching from server");
             fetchQuizzes();
         }
     }, [location.pathname]);
     
     const allQuizzes = useSelector((state: any) => {
         const reduxQuizzes = state?.quizzesReducer?.quizzes || [];
-        // console.log("All quizzes from Redux:", reduxQuizzes);
         return reduxQuizzes;
     });
     
     const courseQuizzes = useMemo(() => {
         if (!Array.isArray(allQuizzes) || !cid) {
-            // console.log("No quizzes array or course ID");
             return [];
         }
-    
-        // console.log(`Filtering for course ID: "${cid}" (${typeof cid})`);
         
         const filtered = allQuizzes.filter((q: any) => String(q.course) === String(cid));
         
@@ -195,6 +186,21 @@ export default function QuizList() {
         
         return "Available";
     };
+
+    useEffect(() => {
+      const style = document.createElement("style");
+      style.innerHTML = `
+        .dropdown-toggle::after {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+    
+      return () => {
+        document.head.removeChild(style);
+      };
+    }, []);
+    
     
     return (
         <div>    
@@ -227,33 +233,24 @@ export default function QuizList() {
                             )}
                             <Dropdown>
                                 <Dropdown.Toggle 
+                                     as="div"
                                     variant="outline-secondary" 
                                     id="dropdown-basic"
                                     className="d-flex align-items-center justify-content-center"
                                     style={{ 
-                                        width: '38px', 
+                                        width: '32px', 
                                         height: '38px', 
-                                        padding: '0', 
-                                        borderRadius: '4px' 
+                                        borderRadius: '8px',
+                                        backgroundColor: '#f8f9fa',
+                                        border: '1px solid #ced4da',                                     
+                                        cursor: 'pointer',
+                                        padding: '0',
+                                        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'                  
+                                         
                                     }}
                                 >
-                                    <FaEllipsisV />
+                                    <FaEllipsisV style={{ color: '#6c757d' }} />
                                 </Dropdown.Toggle>
-
-                                <Dropdown.Menu align="end">
-                                    {isFaculty && (
-                                        <>
-                                            <Dropdown.Item href="#">Edit</Dropdown.Item>
-                                            <Dropdown.Item href="#">Delete</Dropdown.Item>
-                                            <Dropdown.Item href="#">Publish</Dropdown.Item>
-                                            <Dropdown.Item href="#">Copy</Dropdown.Item>
-                                            <Dropdown.Divider />
-                                        </>
-                                    )}
-                                    <Dropdown.Item href="#">Sort by Name</Dropdown.Item>
-                                    <Dropdown.Item href="#">Sort by Due Date</Dropdown.Item>
-                                    <Dropdown.Item href="#">Sort by Available Date</Dropdown.Item>
-                                </Dropdown.Menu>
                             </Dropdown>
                         </div>
                     </div>
@@ -308,10 +305,24 @@ export default function QuizList() {
                                                             </a>
                                                         </div>
                                                         <div className="text-secondary" style={{ fontSize: "13px" }}>
-                                                            <span>
+                                                        <span>
+                                                          {status.startsWith("Not available until") ? (
+                                                            <>
+                                                            <span style={{ fontWeight: "bold", color: "#6c757d" }}>Not available until</span>
+                                                            {` ${formatDate(quiz.availableFromDate)} | `}
+                                                            </>
+                                                            ) : status === "Available" ? (
+                                                            <span style={{ fontWeight: "bold", color: "#6c757d" }}>Available | </span>
+                                                            ) : status === "Closed" ? (
+                                                            <span style={{ fontWeight: "bold", color: "#6c757d" }}>Closed | </span>
+                                                            ) : (
+                                                              `${status} | `
+                                                            )}
+                                                        </span>
+                                                            {/* <span>
                                                                 {status} | 
-                                                            </span>
-                                                            <span><span> Due</span> {formatDate(quiz.dueDate)} | </span>
+                                                            </span> */}
+                                                            <span><span style={{ fontWeight: "bold", color: "#6c757d" }}> Due</span> {formatDate(quiz.dueDate)} | </span>
                                                             <span>{quiz.points} pts | </span>
                                                             <span>{quiz.questions?.length || 0} Questions</span>
                                                         </div>
@@ -343,10 +354,13 @@ export default function QuizList() {
                                                                 <Dropdown.Toggle 
                                                                     as="div" 
                                                                     id={`dropdown-${quiz._id}`}
-                                                                    className="text-secondary p-0 d-flex" 
-                                                                    style={{ cursor: 'pointer' }}
+                                                                    className="d-flex align-items-center justify-content-center"
+                                                                    style={{ 
+                                                                      cursor: 'pointer',
+                                                                      marginTop: '2px',
+                                                                     }}
                                                                 >
-                                                                    <FaEllipsisV />
+                                                                    <FaEllipsisV style={{ color: '#6c757d' }} />
                                                                 </Dropdown.Toggle>
                                                                 <Dropdown.Menu align="end">
                                                                     {isFaculty && (
