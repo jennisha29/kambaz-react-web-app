@@ -110,6 +110,7 @@ export default function Details() {
 
   const handleViewAttempt = () => {
     navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}/view`);
+  };
 
 
   const formatCorrectAnswerOption = (option: string | undefined) => {
@@ -350,4 +351,3 @@ const formatDate = (dateString?: string): string => {
     return "Invalid date";
   }
 };
-}
