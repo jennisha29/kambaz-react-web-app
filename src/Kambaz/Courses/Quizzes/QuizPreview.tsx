@@ -248,18 +248,25 @@ export default function QuizPreview() {
       <div className="d-flex justify-content-between">
         <Button
           variant="secondary"
-          onClick={handleNext}
-          disabled={currentQuestionIndex >= selectedQuiz.questions.length - 1}
+          onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
+          disabled={currentQuestionIndex === 0}
         >
-          Next
+          Previous
         </Button>
 
-        <div className="d-flex gap-2 ms-auto">
+        <div className="d-flex gap-2">
+          {currentQuestionIndex < selectedQuiz.questions.length - 1 && (
+            <Button variant="secondary" onClick={handleNext}>
+              Next
+            </Button>
+          )}
+
           {currentQuestionIndex === selectedQuiz.questions.length - 1 && (
             <Button variant="danger" onClick={handleSubmit}>
               Submit Quiz
             </Button>
           )}
+
           <Button variant="secondary" onClick={handleEditQuiz}>
             Edit Quiz
           </Button>

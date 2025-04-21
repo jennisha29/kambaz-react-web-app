@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Button, Form, Container, Row, Col, Card } from "react-bootstrap";
-import { createQuizAttempt } from "./client";
+import { createQuizAttempt, findQuizAttemptsByUserId } from "./client";
 import { QuestionType, Quiz } from "./client";
 
 interface Answer {
@@ -25,12 +25,30 @@ export default function QuizAttempt() {
     null
   );
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const [userAttemptsCount, setUserAttemptsCount] = useState<number>(0);
 
   useEffect(() => {
     if (selectedQuiz?.timeLimit) {
       setTimeLeft(selectedQuiz.timeLimit * 60);
     }
   }, [selectedQuiz?.timeLimit]);
+
+  useEffect(() => {
+    if (selectedQuiz?._id && currentUser?._id) {
+      const fetchAttempts = async () => {
+        try {
+          const attempts = await findQuizAttemptsByUserId(currentUser._id);
+          const quizAttempts = attempts.filter(
+            (a: any) => a.quiz === selectedQuiz._id
+          );
+          setUserAttemptsCount(quizAttempts.length);
+        } catch (err) {
+          console.error("Failed to fetch attempts", err);
+        }
+      };
+      fetchAttempts();
+    }
+  }, [selectedQuiz?._id, currentUser?._id]);
 
   useEffect(() => {
     if (timeLeft === null || score !== null) return;
@@ -83,9 +101,7 @@ export default function QuizAttempt() {
         isCorrect = correctAnswers.includes(answer?.toLowerCase?.());
       }
 
-      if (isCorrect) {
-        totalScore += question.points;
-      }
+      if (isCorrect) totalScore += question.points;
 
       answerArray.push({
         questionId: question._id!,
@@ -111,6 +127,11 @@ export default function QuizAttempt() {
   };
 
   if (!selectedQuiz) return <Container>Loading Quiz...</Container>;
+
+  const canShowCorrectAnswers =
+    selectedQuiz.showCorrectAnswers &&
+    (selectedQuiz.attempts === undefined ||
+      userAttemptsCount + 1 >= selectedQuiz.attempts);
 
   if (score !== null && submittedAnswers) {
     return (
@@ -147,8 +168,7 @@ export default function QuizAttempt() {
                     const correctChoice =
                       question.choices?.[question.correctAnswer as number];
                     const isCorrect =
-                      selectedQuiz.showCorrectAnswers &&
-                      choice === correctChoice;
+                      canShowCorrectAnswers && choice === correctChoice;
                     const isSelected = userAnswer === choice;
 
                     return (
@@ -179,8 +199,7 @@ export default function QuizAttempt() {
                 {question.questionType === QuestionType.TRUE_FALSE &&
                   [true, false].map((val) => {
                     const isCorrect =
-                      selectedQuiz.showCorrectAnswers &&
-                      question.correctAnswer === val;
+                      canShowCorrectAnswers && question.correctAnswer === val;
                     const isSelected = userAnswer === val;
                     return (
                       <div
@@ -213,7 +232,7 @@ export default function QuizAttempt() {
                     <p>
                       <strong>Your answer:</strong> {userAnswer}
                     </p>
-                    {selectedQuiz.showCorrectAnswers && (
+                    {canShowCorrectAnswers && (
                       <p>
                         <strong>Correct answer(s):</strong>{" "}
                         {(question.correctAnswer as string[]).join(", ")}

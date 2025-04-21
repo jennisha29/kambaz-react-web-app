@@ -20,6 +20,7 @@ export default function ViewAttempt() {
 
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [score, setScore] = useState<number | null>(null);
+  const [userAttemptsCount, setUserAttemptsCount] = useState<number>(0);
 
   useEffect(() => {
     const fetchPreviousAttempt = async () => {
@@ -29,6 +30,8 @@ export default function ViewAttempt() {
         const matchingQuizAttempts = allAttempts.filter(
           (attempt: any) => attempt.quiz === selectedQuiz._id
         );
+
+        setUserAttemptsCount(matchingQuizAttempts.length);
 
         if (matchingQuizAttempts.length > 0) {
           const latestAttempt = matchingQuizAttempts.sort(
@@ -52,6 +55,11 @@ export default function ViewAttempt() {
 
   if (!selectedQuiz) return <Container>Loading Quiz...</Container>;
   if (score === null) return <Container>No attempt found.</Container>;
+
+  const canShowCorrectAnswers =
+    selectedQuiz.showCorrectAnswers &&
+    (selectedQuiz.attempts === undefined ||
+      userAttemptsCount >= selectedQuiz.attempts);
 
   return (
     <Container className="py-4">
@@ -87,7 +95,7 @@ export default function ViewAttempt() {
                   const correctChoice =
                     question.choices?.[question.correctAnswer as number];
                   const isCorrect =
-                    selectedQuiz.showCorrectAnswers && choice === correctChoice;
+                    canShowCorrectAnswers && choice === correctChoice;
                   const isSelected = userAnswer === choice;
 
                   return (
@@ -118,8 +126,7 @@ export default function ViewAttempt() {
               {question.questionType === QuestionType.TRUE_FALSE &&
                 [true, false].map((val) => {
                   const isCorrect =
-                    selectedQuiz.showCorrectAnswers &&
-                    question.correctAnswer === val;
+                    canShowCorrectAnswers && question.correctAnswer === val;
                   const isSelected = userAnswer === val;
                   return (
                     <div
@@ -152,7 +159,7 @@ export default function ViewAttempt() {
                   <p>
                     <strong>Your answer:</strong> {userAnswer}
                   </p>
-                  {selectedQuiz.showCorrectAnswers && (
+                  {canShowCorrectAnswers && (
                     <p>
                       <strong>Correct answer(s):</strong>{" "}
                       {(question.correctAnswer as string[]).join(", ")}
