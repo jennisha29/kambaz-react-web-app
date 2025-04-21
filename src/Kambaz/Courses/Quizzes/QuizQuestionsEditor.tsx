@@ -224,55 +224,6 @@ const QuizQuestionsEditor: React.FC = () => {
     setShowNewQuestion(false);
   };
   
-  const handleSaveAll = async () => {
-    try {
-      setSaveInProgress(true);
-    
-      if (editingQuestion) {
-        let updatedQuestions = [...questions];
-        const index = updatedQuestions.findIndex(q => q._id === editingQuestion._id);
-        
-        if (index !== -1) {
-          updatedQuestions[index] = {...editingQuestion};
-        } else {
-          updatedQuestions.push({...editingQuestion});
-        }
-        
-        updatedQuestions = updatedQuestions.map((q, idx) => ({
-          ...q,
-          title: q.title.startsWith("Question") ? `Question ${idx + 1}` : q.title
-        }));
-        
-        setQuestions(updatedQuestions);
-        calculateTotalPoints(updatedQuestions);
-        
-        setEditingQuestion(null);
-        setShowNewQuestion(false);
-      }
-      
-      await handleSaveQuiz();
-      
-      setSaveInProgress(false);
-    } catch (error) {
-      console.error("Error saving all changes:", error);
-      alert("Error saving changes. Please try again.");
-      setSaveInProgress(false);
-    }
-  };
-  
-  const handleCancelAll = () => {
-    if (editingQuestion) {
-      if (showNewQuestion) {
-        setQuestions(prev => prev.filter(q => q._id !== editingQuestion._id));
-        setTotalPoints(prev => prev - Number(editingQuestion.points || 0));
-      }
-      
-      setEditingQuestion(null);
-      setShowNewQuestion(false);
-    }
-    
-    handleGoBack();
-  };
   
   const handleQuestionChange = (field: string, value: any) => {
     if (!editingQuestion) return;
@@ -433,39 +384,6 @@ const QuizQuestionsEditor: React.FC = () => {
       ...editingQuestion,
       correctAnswer: updatedAnswers
     });
-  };
-  
-  const handleGoBack = () => {
-    navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}`);
-  };
-  
-  const handleSaveQuiz = async () => {
-    try {
-      if (!selectedQuiz) {
-        alert("Quiz not found. Cannot save changes.");
-        return;
-      }
-      
-      console.log("Saving all quiz questions");
-      
-      const updatedQuiz = {
-        ...selectedQuiz,
-        questions,
-        points: totalPoints
-      };
-      
-      console.log("Updated quiz data:", updatedQuiz);
-      const savedQuiz = await client.updateQuiz(updatedQuiz);
-      console.log("Server response:", savedQuiz);
-      
-      dispatch(updateQuiz(savedQuiz));
-      
-      alert("Quiz questions saved successfully!");
-      navigate(`/Kambaz/Courses/${cid}/Quizzes/${qid}`);
-    } catch (error) {
-      console.error("Error saving quiz:", error);
-      alert("Error saving quiz. Please try again.");
-    }
   };
   
   const renderMultipleChoiceEditor = () => {
@@ -1001,26 +919,7 @@ const QuizQuestionsEditor: React.FC = () => {
             )}
           </div>
         )}
-      </div>
-      
-      <hr className="my-4" />
-      <div className="d-flex justify-content-center mt-4 mb-5">
-        <Button 
-          variant="light" 
-          className="me-2 border"
-          onClick={handleCancelAll}
-          disabled={saveInProgress}
-        >
-          Cancel
-        </Button>
-        <Button 
-          variant="danger"
-          onClick={handleSaveAll}
-          disabled={saveInProgress}
-        >
-          {saveInProgress ? "Saving..." : "Save"}
-        </Button>
-      </div>
+      </div> 
     </div>
   );
 };

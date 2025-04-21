@@ -329,9 +329,21 @@ export default function Details() {
           </Button>
         </div>
       )}
+            {isFaculty && (
+        <div className="text-center mt-4">
+          <Button
+            variant="light"
+            className="border"
+            onClick={() => navigate(`/Kambaz/Courses/${cid}/Quizzes`)}
+          >
+            Cancel
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
+
 
 const formatDate = (dateString?: string): string => {
   if (!dateString) return "Not set";
