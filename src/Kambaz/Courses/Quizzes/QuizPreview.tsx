@@ -2,29 +2,7 @@ import { useSelector } from "react-redux";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button, Form, Container, Row, Col, Card } from "react-bootstrap";
-
-interface Option {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-}
-
-interface Question {
-  _id: string;
-  title?: string;
-  text?: string;
-  questionText?: string;
-  questionType: string;
-  points: number;
-  options?: Option[];
-  correctAnswer?: boolean | string[];
-}
-
-interface Quiz {
-  title: string;
-  description: string;
-  questions: Question[];
-}
+import { QuestionType, Quiz } from "./client";
 
 export default function QuizPreview() {
   const { cid, qid } = useParams();
@@ -51,18 +29,21 @@ export default function QuizPreview() {
   const handleSubmit = () => {
     let totalScore = 0;
     selectedQuiz.questions.forEach((question) => {
-      const answer = answers[question._id];
-      if (question.questionType === "Multiple Choice") {
-        const correctOption = question.options?.find((opt) => opt.isCorrect);
-        if (answer === correctOption?.id) totalScore += question.points;
-      } else if (question.questionType === "True/False") {
+      const answer = answers[question._id!];
+
+      if (question.questionType === QuestionType.MULTIPLE_CHOICE) {
+        const correctChoice =
+          question.choices?.[question.correctAnswer as number];
+        if (answer === correctChoice) totalScore += question.points;
+      } else if (question.questionType === QuestionType.TRUE_FALSE) {
         if (answer === question.correctAnswer) totalScore += question.points;
-      } else if (question.questionType === "Fill in the Blank") {
+      } else if (question.questionType === QuestionType.FILL_IN_BLANK) {
         const correctAnswers = (question.correctAnswer as string[]).map((a) =>
           a.toLowerCase()
         );
-        if (correctAnswers.includes(answer?.toLowerCase?.()))
+        if (correctAnswers.includes(answer?.toLowerCase?.())) {
           totalScore += question.points;
+        }
       }
     });
     setScore(totalScore);
@@ -87,9 +68,7 @@ export default function QuizPreview() {
         </p>
 
         {selectedQuiz.questions.map((question, idx) => {
-          const userAnswer = answers[question._id];
-          const questionText =
-            question.text || question.questionText || "Untitled Question";
+          const userAnswer = answers[question._id!];
 
           return (
             <Card key={question._id} className="mb-4">
@@ -100,15 +79,22 @@ export default function QuizPreview() {
                   </Col>
                   <Col className="text-end">{question.points} pts</Col>
                 </Row>
-                <p>{questionText}</p>
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: question.questionText,
+                  }}
+                />
 
-                {question.questionType === "Multiple Choice" &&
-                  question.options?.map((option) => {
-                    const isCorrect = option.isCorrect;
-                    const isSelected = userAnswer === option.id;
+                {question.questionType === QuestionType.MULTIPLE_CHOICE &&
+                  question.choices?.map((choice, i) => {
+                    const correctChoice =
+                      question.choices?.[question.correctAnswer as number];
+                    const isCorrect = choice === correctChoice;
+                    const isSelected = userAnswer === choice;
+
                     return (
                       <div
-                        key={option.id}
+                        key={`${question._id}-choice-${i}`}
                         className={`p-2 mb-2 rounded border ${
                           isCorrect
                             ? "border-success bg-light"
@@ -121,8 +107,7 @@ export default function QuizPreview() {
                           type="radio"
                           label={
                             <span>
-                              {option.text}{" "}
-                              {isCorrect && <strong>(Correct)</strong>}
+                              {choice} {isCorrect && <strong>(Correct)</strong>}
                             </span>
                           }
                           checked={isSelected}
@@ -132,7 +117,7 @@ export default function QuizPreview() {
                     );
                   })}
 
-                {question.questionType === "True/False" && (
+                {question.questionType === QuestionType.TRUE_FALSE && (
                   <>
                     {[true, false].map((boolVal) => {
                       const isCorrect = question.correctAnswer === boolVal;
@@ -166,7 +151,7 @@ export default function QuizPreview() {
                   </>
                 )}
 
-                {question.questionType === "Fill in the Blank" && (
+                {question.questionType === QuestionType.FILL_IN_BLANK && (
                   <>
                     <p>
                       Your answer: <strong>{userAnswer}</strong>
@@ -188,13 +173,13 @@ export default function QuizPreview() {
   }
 
   const currentQuestion = selectedQuiz.questions[currentQuestionIndex];
-  const questionText =
-    currentQuestion.text || currentQuestion.questionText || "Untitled Question";
 
   return (
     <Container className="py-4">
       <h2 className="mb-3">{selectedQuiz.title}</h2>
-      <p className="mb-4">{selectedQuiz.description}</p>
+      <div
+        dangerouslySetInnerHTML={{ __html: selectedQuiz.description || "" }}
+      />
 
       <Card className="mb-4">
         <Card.Body>
@@ -208,52 +193,51 @@ export default function QuizPreview() {
             <Col className="text-end">{currentQuestion.points} pts</Col>
           </Row>
 
-          <p>{questionText}</p>
+          <div
+            dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
+          />
 
-          {currentQuestion.questionType === "Multiple Choice" &&
-            currentQuestion.options?.map((option) => (
+          {currentQuestion.questionType === QuestionType.MULTIPLE_CHOICE &&
+            currentQuestion.choices?.map((choice, i) => (
               <Form.Check
-                key={option.id}
+                key={`${currentQuestion._id}-choice-${i}`}
                 type="radio"
                 name={currentQuestion._id}
-                label={option.text}
-                value={option.id}
-                checked={answers[currentQuestion._id] === option.id}
+                label={choice}
+                value={choice}
+                checked={answers[currentQuestion._id!] === choice}
                 onChange={() =>
-                  handleOptionChange(currentQuestion._id, option.id)
+                  handleOptionChange(currentQuestion._id!, choice)
                 }
                 className="mb-2"
               />
             ))}
 
-          {currentQuestion.questionType === "True/False" && (
-            <>
-              {[true, false].map((boolVal) => (
-                <Form.Check
-                  key={String(boolVal)}
-                  type="radio"
-                  name={currentQuestion._id}
-                  label={
-                    String(boolVal).charAt(0).toUpperCase() +
-                    String(boolVal).slice(1)
-                  }
-                  value={String(boolVal)}
-                  checked={answers[currentQuestion._id] === boolVal}
-                  onChange={() =>
-                    handleOptionChange(currentQuestion._id, boolVal)
-                  }
-                  className="mb-2"
-                />
-              ))}
-            </>
-          )}
+          {currentQuestion.questionType === QuestionType.TRUE_FALSE &&
+            [true, false].map((boolVal) => (
+              <Form.Check
+                key={String(boolVal)}
+                type="radio"
+                name={currentQuestion._id}
+                label={
+                  String(boolVal).charAt(0).toUpperCase() +
+                  String(boolVal).slice(1)
+                }
+                value={String(boolVal)}
+                checked={answers[currentQuestion._id!] === boolVal}
+                onChange={() =>
+                  handleOptionChange(currentQuestion._id!, boolVal)
+                }
+                className="mb-2"
+              />
+            ))}
 
-          {currentQuestion.questionType === "Fill in the Blank" && (
+          {currentQuestion.questionType === QuestionType.FILL_IN_BLANK && (
             <Form.Control
               type="text"
-              value={answers[currentQuestion._id] || ""}
+              value={answers[currentQuestion._id!] || ""}
               onChange={(e) =>
-                handleOptionChange(currentQuestion._id, e.target.value)
+                handleOptionChange(currentQuestion._id!, e.target.value)
               }
               placeholder="Type your answer here"
             />

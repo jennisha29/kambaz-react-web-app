@@ -2,32 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Button, Form, Container, Row, Col, Card } from "react-bootstrap";
 import { createQuizAttempt } from "./client";
-
-interface Option {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-}
-
-interface Question {
-  _id: string;
-  title?: string;
-  text?: string;
-  questionText?: string;
-  questionType: string;
-  points: number;
-  options?: Option[];
-  correctAnswer?: boolean | string[];
-}
-
-interface Quiz {
-  _id?: string;
-  title: string;
-  description: string;
-  questions: Question[];
-  timeLimit?: number;
-  showCorrectAnswers?: boolean;
-}
+import { QuestionType, Quiz } from "./client";
 
 interface Answer {
   questionId: string;
@@ -53,8 +28,7 @@ export default function QuizAttempt() {
 
   useEffect(() => {
     if (selectedQuiz?.timeLimit) {
-      const totalSeconds = selectedQuiz.timeLimit * 60;
-      setTimeLeft(totalSeconds);
+      setTimeLeft(selectedQuiz.timeLimit * 60);
     }
   }, [selectedQuiz?.timeLimit]);
 
@@ -80,7 +54,7 @@ export default function QuizAttempt() {
   };
 
   const handleOptionChange = (questionId: string, value: any) => {
-    setAnswers((prevAnswers) => ({ ...prevAnswers, [questionId]: value }));
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
   const handleNext = () => {
@@ -94,15 +68,15 @@ export default function QuizAttempt() {
     const answerArray: Answer[] = [];
 
     selectedQuiz.questions.forEach((question) => {
-      const answer = answers[question._id];
+      const answer = answers[question._id!];
       let isCorrect = false;
 
-      if (question.questionType === "Multiple Choice") {
-        const correctOption = question.options?.find((opt) => opt.isCorrect);
-        isCorrect = answer === correctOption?.id;
-      } else if (question.questionType === "True/False") {
+      if (question.questionType === QuestionType.MULTIPLE_CHOICE) {
+        isCorrect =
+          answer === question.choices?.[question.correctAnswer as number];
+      } else if (question.questionType === QuestionType.TRUE_FALSE) {
         isCorrect = answer === question.correctAnswer;
-      } else if (question.questionType === "Fill in the Blank") {
+      } else if (question.questionType === QuestionType.FILL_IN_BLANK) {
         const correctAnswers = (question.correctAnswer as string[]).map((a) =>
           a.toLowerCase()
         );
@@ -114,7 +88,7 @@ export default function QuizAttempt() {
       }
 
       answerArray.push({
-        questionId: question._id,
+        questionId: question._id!,
         answer,
         correct: isCorrect,
       });
@@ -154,10 +128,7 @@ export default function QuizAttempt() {
         </Row>
 
         {selectedQuiz.questions.map((question, index) => {
-          const userAnswer = answers[question._id];
-          const questionText =
-            question.text || question.questionText || "Untitled Question";
-
+          const userAnswer = answers[question._id!];
           return (
             <Card key={question._id} className="mb-4">
               <Card.Body>
@@ -167,16 +138,22 @@ export default function QuizAttempt() {
                   </Col>
                   <Col className="text-end">{question.points} pts</Col>
                 </Row>
-                <p>{questionText}</p>
+                <div
+                  dangerouslySetInnerHTML={{ __html: question.questionText }}
+                />
 
-                {question.questionType === "Multiple Choice" &&
-                  question.options?.map((option) => {
+                {question.questionType === QuestionType.MULTIPLE_CHOICE &&
+                  question.choices?.map((choice, idx) => {
+                    const correctChoice =
+                      question.choices?.[question.correctAnswer as number];
                     const isCorrect =
-                      selectedQuiz.showCorrectAnswers && option.isCorrect;
-                    const isSelected = userAnswer === option.id;
+                      selectedQuiz.showCorrectAnswers &&
+                      choice === correctChoice;
+                    const isSelected = userAnswer === choice;
+
                     return (
                       <div
-                        key={option.id}
+                        key={`${question._id}-choice-${idx}`}
                         className={`p-2 mb-2 rounded border ${
                           isCorrect
                             ? "border-success"
@@ -189,8 +166,7 @@ export default function QuizAttempt() {
                           type="radio"
                           label={
                             <span>
-                              {option.text}{" "}
-                              {isCorrect && <strong>(Correct)</strong>}
+                              {choice} {isCorrect && <strong>(Correct)</strong>}
                             </span>
                           }
                           checked={isSelected}
@@ -200,7 +176,7 @@ export default function QuizAttempt() {
                     );
                   })}
 
-                {question.questionType === "True/False" &&
+                {question.questionType === QuestionType.TRUE_FALSE &&
                   [true, false].map((val) => {
                     const isCorrect =
                       selectedQuiz.showCorrectAnswers &&
@@ -232,7 +208,7 @@ export default function QuizAttempt() {
                     );
                   })}
 
-                {question.questionType === "Fill in the Blank" && (
+                {question.questionType === QuestionType.FILL_IN_BLANK && (
                   <div>
                     <p>
                       <strong>Your answer:</strong> {userAnswer}
@@ -254,8 +230,6 @@ export default function QuizAttempt() {
   }
 
   const currentQuestion = selectedQuiz.questions[currentQuestionIndex];
-  const questionText =
-    currentQuestion.text || currentQuestion.questionText || "Untitled Question";
 
   return (
     <Container className="py-4">
@@ -269,7 +243,10 @@ export default function QuizAttempt() {
           </Col>
         )}
       </Row>
-      <p>{selectedQuiz.description}</p>
+
+      <div
+        dangerouslySetInnerHTML={{ __html: selectedQuiz.description || "" }}
+      />
 
       <Card className="mb-4">
         <Card.Body>
@@ -283,52 +260,51 @@ export default function QuizAttempt() {
             <Col className="text-end">{currentQuestion.points} pts</Col>
           </Row>
 
-          <p>{questionText}</p>
+          <div
+            dangerouslySetInnerHTML={{ __html: currentQuestion.questionText }}
+          />
 
-          {currentQuestion.questionType === "Multiple Choice" &&
-            currentQuestion.options?.map((option) => (
+          {currentQuestion.questionType === QuestionType.MULTIPLE_CHOICE &&
+            currentQuestion.choices?.map((choice, idx) => (
               <Form.Check
-                key={option.id}
+                key={`${currentQuestion._id}-choice-${idx}`}
                 type="radio"
                 name={currentQuestion._id}
-                label={option.text}
-                value={option.id}
-                checked={answers[currentQuestion._id] === option.id}
+                label={choice}
+                value={choice}
+                checked={answers[currentQuestion._id!] === choice}
                 onChange={() =>
-                  handleOptionChange(currentQuestion._id, option.id)
+                  handleOptionChange(currentQuestion._id!, choice)
                 }
                 className="mb-2"
               />
             ))}
 
-          {currentQuestion.questionType === "True/False" && (
-            <>
-              {[true, false].map((boolVal) => (
-                <Form.Check
-                  key={String(boolVal)}
-                  type="radio"
-                  name={currentQuestion._id}
-                  label={
-                    String(boolVal).charAt(0).toUpperCase() +
-                    String(boolVal).slice(1)
-                  }
-                  value={String(boolVal)}
-                  checked={answers[currentQuestion._id] === boolVal}
-                  onChange={() =>
-                    handleOptionChange(currentQuestion._id, boolVal)
-                  }
-                  className="mb-2"
-                />
-              ))}
-            </>
-          )}
+          {currentQuestion.questionType === QuestionType.TRUE_FALSE &&
+            [true, false].map((boolVal) => (
+              <Form.Check
+                key={String(boolVal)}
+                type="radio"
+                name={currentQuestion._id}
+                label={
+                  String(boolVal).charAt(0).toUpperCase() +
+                  String(boolVal).slice(1)
+                }
+                value={String(boolVal)}
+                checked={answers[currentQuestion._id!] === boolVal}
+                onChange={() =>
+                  handleOptionChange(currentQuestion._id!, boolVal)
+                }
+                className="mb-2"
+              />
+            ))}
 
-          {currentQuestion.questionType === "Fill in the Blank" && (
+          {currentQuestion.questionType === QuestionType.FILL_IN_BLANK && (
             <Form.Control
               type="text"
-              value={answers[currentQuestion._id] || ""}
+              value={answers[currentQuestion._id!] || ""}
               onChange={(e) =>
-                handleOptionChange(currentQuestion._id, e.target.value)
+                handleOptionChange(currentQuestion._id!, e.target.value)
               }
               placeholder="Type your answer here"
             />
@@ -339,17 +315,25 @@ export default function QuizAttempt() {
       <div className="d-flex justify-content-between">
         <Button
           variant="secondary"
-          onClick={handleNext}
-          disabled={currentQuestionIndex >= selectedQuiz.questions.length - 1}
+          onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
+          disabled={currentQuestionIndex === 0}
         >
-          Next
+          Previous
         </Button>
 
-        {currentQuestionIndex === selectedQuiz.questions.length - 1 && (
-          <Button variant="danger" onClick={handleSubmit}>
-            Submit Quiz
-          </Button>
-        )}
+        <div className="d-flex gap-2">
+          {currentQuestionIndex < selectedQuiz.questions.length - 1 && (
+            <Button variant="secondary" onClick={handleNext}>
+              Next
+            </Button>
+          )}
+
+          {currentQuestionIndex === selectedQuiz.questions.length - 1 && (
+            <Button variant="danger" onClick={handleSubmit}>
+              Submit Quiz
+            </Button>
+          )}
+        </div>
       </div>
     </Container>
   );

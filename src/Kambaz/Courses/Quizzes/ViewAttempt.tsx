@@ -2,31 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { Form, Container, Row, Col, Card } from "react-bootstrap";
 import { findQuizAttemptsByUserId } from "./client";
-
-interface Option {
-  id: string;
-  text: string;
-  isCorrect: boolean;
-}
-
-interface Question {
-  _id: string;
-  title?: string;
-  text?: string;
-  questionText?: string;
-  questionType: string;
-  points: number;
-  options?: Option[];
-  correctAnswer?: boolean | string[];
-}
-
-interface Quiz {
-  _id?: string;
-  title: string;
-  description: string;
-  questions: Question[];
-  showCorrectAnswers?: boolean;
-}
+import { QuestionType, Quiz } from "./client";
 
 interface Answer {
   questionId: string;
@@ -92,9 +68,8 @@ export default function ViewAttempt() {
       </Row>
 
       {selectedQuiz.questions.map((question, index) => {
-        const userAnswer = answers[question._id];
-        const questionText =
-          question.text || question.questionText || "Untitled Question";
+        const userAnswer = answers[question._id!];
+        const questionText = question.questionText || "Untitled Question";
 
         return (
           <Card key={question._id} className="mb-4">
@@ -105,16 +80,19 @@ export default function ViewAttempt() {
                 </Col>
                 <Col className="text-end">{question.points} pts</Col>
               </Row>
-              <p>{questionText}</p>
+              <div dangerouslySetInnerHTML={{ __html: questionText }} />
 
-              {question.questionType === "Multiple Choice" &&
-                question.options?.map((option) => {
+              {question.questionType === QuestionType.MULTIPLE_CHOICE &&
+                question.choices?.map((choice, i) => {
+                  const correctChoice =
+                    question.choices?.[question.correctAnswer as number];
                   const isCorrect =
-                    selectedQuiz.showCorrectAnswers && option.isCorrect;
-                  const isSelected = userAnswer === option.id;
+                    selectedQuiz.showCorrectAnswers && choice === correctChoice;
+                  const isSelected = userAnswer === choice;
+
                   return (
                     <div
-                      key={option.id}
+                      key={`${question._id}-choice-${i}`}
                       className={`p-2 mb-2 rounded border ${
                         isCorrect
                           ? "border-success"
@@ -127,8 +105,7 @@ export default function ViewAttempt() {
                         type="radio"
                         label={
                           <span>
-                            {option.text}{" "}
-                            {isCorrect && <strong>(Correct)</strong>}
+                            {choice} {isCorrect && <strong>(Correct)</strong>}
                           </span>
                         }
                         checked={isSelected}
@@ -138,7 +115,7 @@ export default function ViewAttempt() {
                   );
                 })}
 
-              {question.questionType === "True/False" &&
+              {question.questionType === QuestionType.TRUE_FALSE &&
                 [true, false].map((val) => {
                   const isCorrect =
                     selectedQuiz.showCorrectAnswers &&
@@ -170,7 +147,7 @@ export default function ViewAttempt() {
                   );
                 })}
 
-              {question.questionType === "Fill in the Blank" && (
+              {question.questionType === QuestionType.FILL_IN_BLANK && (
                 <div>
                   <p>
                     <strong>Your answer:</strong> {userAnswer}
